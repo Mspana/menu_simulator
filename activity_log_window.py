@@ -180,7 +180,7 @@ class ActivityLogWindow:
         bar_x = self.position[0] + 20
         bar_width = self.width - 40
         text_x = bar_x + (bar_width - text_surface.get_width()) // 2
-        text_y = content_y - 25  # Add space between text and progress bar
+        text_y = content_y + 5  # Add padding below titlebar to avoid clipping
         
         # Draw outline (offset by 1 pixel in each direction)
         for dx in [-1, 0, 1]:
