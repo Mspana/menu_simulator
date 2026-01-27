@@ -267,7 +267,7 @@ class EndingScreen:
                 "",
                 "You didn't actually do anything!",
                 "Calvelli was doing all the work",
-                "while you were clicking menus.",
+                "while you were a tenured professor.",
                 "",
                 "Thanks for 'helping'!",
             ]

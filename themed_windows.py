@@ -709,12 +709,12 @@ class MessagesWindow(ThemedWindow):
         
         # Check send button
         if self.replying and self.is_reply_complete:
-            send_button_y = self.position[1] + self.height - 80
+            reply_area_y = self.position[1] + self.height - 90
             send_button_rect = pygame.Rect(
                 self.position[0] + self.width - 110,
-                send_button_y,
+                reply_area_y - 50,
                 100,
-                30
+                40
             )
             if send_button_rect.collidepoint(pos):
                 # Send the reply
@@ -872,7 +872,7 @@ class MessagesWindow(ThemedWindow):
                         screen.blit(remaining_text, (msg_x + 5 + typed_text.get_width(), reply_area_y - 45))
                     
                     # Draw send button
-                    send_button_rect = pygame.Rect(self.width - 110, reply_area_y - 50, 100, 40)
+                    send_button_rect = pygame.Rect(self.position[0] + self.width - 110, reply_area_y - 50, 100, 40)
                     send_color = (0, 180, 0) if self.is_reply_complete else (150, 150, 150)
                     pygame.draw.rect(screen, send_color, send_button_rect)
                     pygame.draw.rect(screen, (100, 100, 100), send_button_rect, 1)
@@ -971,12 +971,12 @@ class SlackWindow(ThemedWindow):
         
         # Check send button
         if self.replying and self.is_reply_complete:
-            send_button_y = self.position[1] + self.height - 80
+            reply_area_y = self.position[1] + self.height - 90
             send_button_rect = pygame.Rect(
                 self.position[0] + self.width - 110,
-                send_button_y,
+                reply_area_y - 50,
                 100,
-                30
+                40
             )
             if send_button_rect.collidepoint(pos):
                 # Send the reply
@@ -1105,7 +1105,7 @@ class SlackWindow(ThemedWindow):
                     screen.blit(remaining_text, (msg_x + 5 + typed_text.get_width(), reply_area_y - 45))
                 
                 # Draw send button
-                send_button_rect = pygame.Rect(self.width - 110, reply_area_y - 50, 100, 40)
+                send_button_rect = pygame.Rect(self.position[0] + self.width - 110, reply_area_y - 50, 100, 40)
                 send_color = (0, 180, 0) if self.is_reply_complete else (150, 150, 150)
                 pygame.draw.rect(screen, send_color, send_button_rect)
                 pygame.draw.rect(screen, (100, 100, 100), send_button_rect, 1)
@@ -1216,12 +1216,12 @@ class DiscordWindow(ThemedWindow):
         
         # Check send button
         if self.replying and self.is_reply_complete:
-            send_button_y = self.position[1] + self.height - 80
+            reply_area_y = self.position[1] + self.height - 90
             send_button_rect = pygame.Rect(
                 self.position[0] + self.width - 110,
-                send_button_y,
+                reply_area_y - 50,
                 100,
-                30
+                40
             )
             if send_button_rect.collidepoint(pos):
                 # Send the reply
@@ -1350,7 +1350,7 @@ class DiscordWindow(ThemedWindow):
                     screen.blit(remaining_text, (msg_x + 5 + typed_text.get_width(), reply_area_y - 45))
                 
                 # Draw send button
-                send_button_rect = pygame.Rect(self.width - 110, reply_area_y - 50, 100, 40)
+                send_button_rect = pygame.Rect(self.position[0] + self.width - 110, reply_area_y - 50, 100, 40)
                 send_color = (88, 101, 242) if self.is_reply_complete else (66, 70, 78)
                 pygame.draw.rect(screen, send_color, send_button_rect)
                 pygame.draw.rect(screen, (100, 100, 100), send_button_rect, 1)
