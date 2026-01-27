@@ -140,7 +140,7 @@ class GameNotification:
         # Draw instruction box (smaller, not touching top/sides, orange)
         padding = 20  # Padding from sides and top
         instruction_box_width = self.window.width - (padding * 2)
-        instruction_box_height = 35
+        instruction_box_height = 50  # Increased to fit two lines of text
         instruction_box_x = self.window.position[0] + padding
         instruction_box_y = content_y + padding
         
