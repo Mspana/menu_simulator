@@ -47,10 +47,6 @@ class StartupAnimation:
         # Window opening animation
         self.window_open_duration = 0.5  # 0.5 seconds
         self.window_animations = {}  # Track each window's animation state
-
-        # Post-window white fade animation (white -> normal content)
-        self.post_fade_duration = 0.25  # 0.25 seconds
-        self.post_fade_alpha = 255
         
         # Initialize window animations
         if self.windows:
@@ -171,24 +167,12 @@ class StartupAnimation:
                     window.opening_progress = 1.0
             
             if all_complete:
-                # All windows finished opening; start white fade-out to reveal full content
-                self.current_phase = "white_fade"
-                self.phase_start_time = current_time
-                self.post_fade_alpha = 255
-        
-        elif self.current_phase == "white_fade":
-            # Simple timer; rendering handles the actual fade
-            progress = min(elapsed / self.post_fade_duration, 1.0)
-            self.post_fade_alpha = int(255 * (1.0 - progress))
-            if progress >= 1.0:
                 return True  # Entire startup sequence complete
         
         return False
     
     def is_complete(self):
         """Check if animation is complete"""
-        if self.current_phase == "white_fade":
-            return self.post_fade_alpha <= 0
         if self.current_phase == "windows_opening":
             return all(hasattr(w, 'opening_progress') and w.opening_progress >= 1.0 for w in self.windows)
         return self.current_phase == "fade_in" and self.fade_alpha <= 0
@@ -240,53 +224,20 @@ class StartupAnimation:
             # Draw game background (fully visible)
             self.screen.blit(game_background, (0, 0))
             
-            # Draw windows with opening animation
+            # Draw full window contents at their animated size/position
             for window in sorted(self.windows, key=lambda w: w.z_index):
-                # Create a temporary surface for the window with alpha
-                window_surface = pygame.Surface((window.width, window.height), pygame.SRCALPHA)
+                # Render full window into an off-screen surface at origin
+                content_surface = pygame.Surface((window.width, window.height), pygame.SRCALPHA)
+                old_pos = list(window.position)
+                window.position = [0, 0]
                 
-                # Render window content to temporary surface
-                # Scale background surface to current window size
-                scaled_bg = pygame.transform.scale(window.background_surface, (window.width, window.height))
-                window_surface.blit(scaled_bg, (0, 0))
-                
-                # Render titlebar
-                titlebar_rect = pygame.Rect(0, 0, window.width, window.titlebar_height)
-                pygame.draw.rect(window_surface, (200, 200, 200), titlebar_rect)
-                font = pygame.font.Font(None, 20)
-                title_text = font.render(window.title, True, (0, 0, 0))
-                text_y = (window.titlebar_height - title_text.get_height()) // 2
-                window_surface.blit(title_text, (10, text_y))
-                
-                # Render window border
-                pygame.draw.rect(window_surface, (180, 180, 180), 
-                               pygame.Rect(0, 0, window.width, window.height), 2)
-                
-                # Apply alpha based on opening progress
-                window_surface.set_alpha(window.opening_alpha)
-                
-                # Blit to screen at animated position
-                self.screen.blit(window_surface, window.position)
-        
-        elif self.current_phase == "white_fade":
-            # Draw full game background and full window contents,
-            # then overlay a fading white screen for a smooth transition
-            self.screen.blit(game_background, (0, 0))
-            
-            # Draw windows with their normal render so content is visible
-            for window in sorted(self.windows, key=lambda w: w.z_index):
-                # Temporarily ensure full alpha for normal rendering
-                if hasattr(window, "opening_alpha"):
-                    window.opening_alpha = 255
-                # Some windows (like ActivityLogWindow) need special handling
                 if hasattr(window, "render_for_startup"):
-                    window.render_for_startup(self.screen)
+                    window.render_for_startup(content_surface)
                 else:
-                    window.render(self.screen)
-            
-            # White overlay fading out
-            if self.post_fade_alpha > 0:
-                white_overlay = pygame.Surface((self.width, self.height))
-                white_overlay.fill((255, 255, 255))
-                white_overlay.set_alpha(self.post_fade_alpha)
-                self.screen.blit(white_overlay, (0, 0))
+                    window.render(content_surface)
+                
+                window.position = old_pos
+                
+                # Apply opening alpha and blit at animated position
+                content_surface.set_alpha(window.opening_alpha)
+                self.screen.blit(content_surface, window.position)
