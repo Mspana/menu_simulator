@@ -8,6 +8,7 @@ import sys
 import os
 import argparse
 import math
+import random
 from themed_windows import (FTLWindow, ZomboidWindow, InventoryWindow, 
                            OutlookWindow, MessagesWindow, SlackWindow, DiscordWindow)
 from email_view_window import EmailViewWindow
@@ -66,8 +67,27 @@ class Game:
         
         # Load assets
         self.assets_path = os.path.join(os.path.dirname(__file__), "assets_pack")
-        # Create classic Windows-style island background
-        self.background = self._create_island_background()
+        # Desktop background: randomly choose one of the provided background images
+        backgrounds_dir = os.path.join(self.assets_path, "backgrounds")
+        try:
+            available = [f for f in os.listdir(backgrounds_dir)
+                         if f.lower().startswith("background") and f.lower().endswith(".png")]
+            if available:
+                chosen = random.choice(available)
+                bg_path = os.path.join(backgrounds_dir, chosen)
+                bg_image = pygame.image.load(bg_path).convert()
+                # Scale to screen size if needed
+                if bg_image.get_size() != (SCREEN_WIDTH, SCREEN_HEIGHT):
+                    bg_image = pygame.transform.smoothscale(bg_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+                self.background = bg_image
+            else:
+                # Fallback: solid color background if no files match
+                self.background = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+                self.background.fill((0, 100, 160))
+        except Exception:
+            # Fallback: solid color background if loading fails
+            self.background = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            self.background.fill((0, 100, 160))
         
         # Game state
         self.game_state = GameState()
@@ -194,7 +214,9 @@ class Game:
                         self.showing_start_screen = False
                         self.showing_startup_animation = True
                         import time
-                        self.startup_animation = StartupAnimation(self.screen, self.menus)
+                        # Include activity log window in startup animations
+                        windows_for_animation = [self.activity_log_window] + self.menus
+                        self.startup_animation = StartupAnimation(self.screen, windows_for_animation)
                     continue
                 
                 if event.key == pygame.K_ESCAPE:
@@ -233,7 +255,9 @@ class Game:
                         if self.start_screen.handle_click(event.pos):
                             self.showing_start_screen = False
                             self.showing_startup_animation = True
-                            self.startup_animation = StartupAnimation(self.screen, self.menus)
+                            # Include activity log window in startup animations
+                            windows_for_animation = [self.activity_log_window] + self.menus
+                            self.startup_animation = StartupAnimation(self.screen, windows_for_animation)
                         continue
                     
                     if not self.showing_startup_animation:
@@ -404,17 +428,8 @@ class Game:
                                     email['reply_text'] = menu.sent_reply
                                     break
                         
-                        # Add activity log entry for responding to email
-                        self.activity_log_window.add_activity("You responded to an email", 0.1)
-                        # Increase progress by 0.1%
-                        self.game_state.increase_progress(0.1)
-                        # Create progress popup
-                        progress_bar_center = (
-                            self.activity_log_window.position[0] + self.activity_log_window.width // 2,
-                            self.activity_log_window.position[1] + self.activity_log_window.titlebar_height + 35
-                        )
-                        import time
-                        self.progress_popup_system.check_progress_increase(self.game_state.progress, progress_bar_center)
+                        # Small progress for responding to an email
+                        self._register_small_progress("You responded to an email")
                     
                     # Also close the email view window if it's open
                     email_view_window = next((w for w in self.menus if isinstance(w, EmailViewWindow) and 
@@ -432,6 +447,18 @@ class Game:
         # Update game state based on interactions
         if clicked_menu:
             self.game_state.on_menu_interaction()
+
+    def _register_small_progress(self, message):
+        """Helper to add a small (+0.1%) progress event to the activity log."""
+        self.activity_log_window.add_activity(message, 0.1)
+        self.game_state.increase_progress(0.1)
+        # Create a progress popup over the progress bar
+        progress_bar_center = (
+            self.activity_log_window.position[0] + self.activity_log_window.width // 2,
+            self.activity_log_window.position[1] + self.activity_log_window.titlebar_height + 35
+        )
+        import time
+        self.progress_popup_system.check_progress_increase(self.game_state.progress, progress_bar_center)
     
     def _handle_release(self, pos):
         """Handle mouse release (end drag)"""
@@ -581,6 +608,17 @@ class Game:
         # Update phone call system
         self.phone_call_system.update(current_time)
         
+        # Update FTL/Zomboid mini-game notifications
+        self.game_notifications.update()
+        # Grant small progress when a mini-game completes
+        if self.game_notifications.completed_events:
+            for game_type in self.game_notifications.completed_events:
+                if game_type == "ftl":
+                    self._register_small_progress("You played FTL")
+                elif game_type == "zomboid":
+                    self._register_small_progress("You played Zomboid")
+            self.game_notifications.completed_events.clear()
+        
         # Update Outlook email system
         if self.outlook_email_system:
             self.outlook_email_system.update()
@@ -591,6 +629,25 @@ class Game:
             # Use milliseconds for dt (matching blink_timer which uses milliseconds)
             dt = 16  # Approximate frame time in ms (60 FPS)
             outlook_window.update(dt)
+        
+        # Check for replies sent in Messages, Slack, and Discord windows
+        messages_window = next((m for m in self.menus if isinstance(m, MessagesWindow)), None)
+        if messages_window and hasattr(messages_window, "sent_reply_events"):
+            for event_msg in messages_window.sent_reply_events:
+                self._register_small_progress(event_msg)
+            messages_window.sent_reply_events.clear()
+        
+        slack_window = next((m for m in self.menus if isinstance(m, SlackWindow)), None)
+        if slack_window and hasattr(slack_window, "sent_reply_events"):
+            for event_msg in slack_window.sent_reply_events:
+                self._register_small_progress(event_msg)
+            slack_window.sent_reply_events.clear()
+        
+        discord_window = next((m for m in self.menus if isinstance(m, DiscordWindow)), None)
+        if discord_window and hasattr(discord_window, "sent_reply_events"):
+            for event_msg in discord_window.sent_reply_events:
+                self._register_small_progress(event_msg)
+            discord_window.sent_reply_events.clear()
         
         # Update themed windows (e.g., Zomboid cycling, Outlook blinking)
         dt = self.clock.get_time()
@@ -796,89 +853,6 @@ class Game:
                 self.discord_interrupt.render(self.screen)
         
         pygame.display.flip()
-    
-    def _create_island_background(self):
-        """Create a classic Windows-style island background with ocean and palm trees"""
-        background = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        
-        # Draw sky gradient (light blue to lighter blue)
-        for y in range(SCREEN_HEIGHT // 2):
-            ratio = y / (SCREEN_HEIGHT // 2)
-            r = int(135 + (120 * ratio))  # 135 to 255
-            g = int(206 + (49 * ratio))   # 206 to 255
-            b = int(250)  # Keep blue constant
-            pygame.draw.line(background, (r, g, b), (0, y), (SCREEN_WIDTH, y))
-        
-        # Draw ocean (blue gradient)
-        ocean_start = SCREEN_HEIGHT // 2
-        for y in range(ocean_start, SCREEN_HEIGHT):
-            ratio = (y - ocean_start) / (SCREEN_HEIGHT - ocean_start)
-            # Ocean blue gradient
-            r = int(30 + (20 * ratio))
-            g = int(144 + (30 * ratio))
-            b = int(255 - (30 * ratio))
-            pygame.draw.line(background, (r, g, b), (0, y), (SCREEN_WIDTH, y))
-        
-        # Draw circular island (brown/tan)
-        island_center_x = SCREEN_WIDTH // 2
-        island_center_y = SCREEN_HEIGHT // 2 + 100
-        island_radius = 320  # Increased from 200 to make island bigger
-        
-        # Island base (ellipse, wider than tall)
-        island_rect = pygame.Rect(
-            island_center_x - island_radius,
-            island_center_y - island_radius // 2,
-            island_radius * 2,
-            island_radius
-        )
-        pygame.draw.ellipse(background, (139, 90, 43), island_rect)  # Saddle brown
-        pygame.draw.ellipse(background, (160, 120, 60), island_rect, 2)  # Lighter border
-        
-        # Draw three palm trees (spread out more for bigger island)
-        tree_positions = [
-            (island_center_x - 120, island_center_y - 30),
-            (island_center_x, island_center_y - 40),
-            (island_center_x + 120, island_center_y - 30)
-        ]
-        
-        for tree_x, tree_y in tree_positions:
-            # Draw trunk (brown rectangle) - much bigger
-            trunk_width = 20
-            trunk_height = 120
-            trunk_rect = pygame.Rect(
-                tree_x - trunk_width // 2,
-                tree_y - trunk_height,
-                trunk_width,
-                trunk_height
-            )
-            pygame.draw.rect(background, (101, 67, 33), trunk_rect)  # Brown trunk
-            
-            # Draw palm fronds (green leaves) - much bigger
-            frond_color = (34, 139, 34)  # Forest green
-            num_fronds = 8
-            frond_length = 80
-            
-            for i in range(num_fronds):
-                angle = (i * 360 / num_fronds) - 90  # Start from top
-                angle_rad = math.radians(angle)
-                
-                # Draw frond as a line with some width
-                end_x = tree_x + frond_length * math.cos(angle_rad)
-                end_y = tree_y - trunk_height + frond_length * math.sin(angle_rad)
-                
-                # Draw multiple lines to make frond thicker
-                for offset in range(-4, 5):
-                    offset_x = offset * math.cos(angle_rad + math.pi / 2)
-                    offset_y = offset * math.sin(angle_rad + math.pi / 2)
-                    pygame.draw.line(
-                        background,
-                        frond_color,
-                        (int(tree_x + offset_x), int(tree_y - trunk_height + offset_y)),
-                        (int(end_x + offset_x), int(end_y + offset_y)),
-                        5
-                    )
-        
-        return background
     
     def run(self):
         """Main game loop"""

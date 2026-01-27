@@ -358,29 +358,11 @@ class PhoneCallSystem:
             font_large = pygame.font.Font(None, 32)
             font_medium = pygame.font.Font(None, 24)
             
-            # Handle long names (like "Michael Miske") by splitting into two lines
+            # Always render caller name on a single line (no forced wrapping)
             caller_name = self.active_call.caller_name
-            if len(caller_name) > 12:  # If name is long, split it
-                # Try to split on space
-                name_parts = caller_name.split(' ', 1)
-                if len(name_parts) == 2:
-                    # Two lines
-                    first_line = font_large.render(name_parts[0], True, (0, 0, 0))
-                    second_line = font_large.render(name_parts[1], True, (0, 0, 0))
-                    first_rect = first_line.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 35))
-                    second_rect = second_line.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 55))
-                    screen.blit(first_line, first_rect)
-                    screen.blit(second_line, second_rect)
-                else:
-                    # Single line (no space to split on)
-                    caller_text = font_large.render(caller_name, True, (0, 0, 0))
-                    caller_rect = caller_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 40))
-                    screen.blit(caller_text, caller_rect)
-            else:
-                # Short name, single line
-                caller_text = font_large.render(caller_name, True, (0, 0, 0))
-                caller_rect = caller_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 40))
-                screen.blit(caller_text, caller_rect)
+            caller_text = font_large.render(caller_name, True, (0, 0, 0))
+            caller_rect = caller_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 45))
+            screen.blit(caller_text, caller_rect)
             
             number_text = font_medium.render(self.active_call.caller_number, True, (100, 100, 100))
             number_rect = number_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 75))
@@ -439,26 +421,18 @@ class PhoneCallSystem:
             )
             pygame.draw.rect(screen, (60, 60, 60), title_bar)
             
-            # Caller name in title (handle long names like "Michael Miske")
+            # Caller name in title (always inline, with simple cutoff before duration)
             font_small = pygame.font.Font(None, 18)
             caller_name = self.active_call.caller_name
-            if len(caller_name) > 12:  # If name is long, split it
-                # Try to split on space
-                name_parts = caller_name.split(' ', 1)
-                if len(name_parts) == 2:
-                    # Two lines
-                    title_text1 = font_small.render(f"Call with {name_parts[0]}", True, (255, 255, 255))
-                    title_text2 = font_small.render(name_parts[1], True, (255, 255, 255))
-                    screen.blit(title_text1, (self.conv_x + 10, title_bar_y + 5))
-                    screen.blit(title_text2, (self.conv_x + 10, title_bar_y + 20))
-                else:
-                    # Single line (no space to split on)
-                    title_text = font_small.render(f"Call with {caller_name}", True, (255, 255, 255))
-                    screen.blit(title_text, (self.conv_x + 10, title_bar_y + 8))
-            else:
-                # Short name, single line
-                title_text = font_small.render(f"Call with {caller_name}", True, (255, 255, 255))
-                screen.blit(title_text, (self.conv_x + 10, title_bar_y + 8))
+            full_title = f"Call with {caller_name}"
+            # Leave some space on the right for the duration text
+            max_title_width = self.conv_width - 80
+            title_str = full_title
+            # Truncate and add "..." if too wide
+            while font_small.size(title_str)[0] > max_title_width and len(title_str) > 3:
+                title_str = title_str[:-4] + "..."
+            title_text = font_small.render(title_str, True, (255, 255, 255))
+            screen.blit(title_text, (self.conv_x + 10, title_bar_y + 8))
             
             # Call duration indicator
             if self.active_call.start_time:
@@ -479,6 +453,12 @@ class PhoneCallSystem:
             font_conv = pygame.font.Font(None, 16)
             font_speaker = pygame.font.Font(None, 14)
             max_width = self.conv_width - 30  # Leave padding
+
+            # Compute a consistent label width so all messages align nicely
+            caller_label_width = font_speaker.size(self.active_call.caller_name + ":")[0]
+            you_label_width = font_speaker.size("You:")[0]
+            label_column_width = max(caller_label_width, you_label_width)
+            text_column_x = self.conv_x + 10 + label_column_width + 10
             
             # Get all messages to display
             messages_to_show = []
@@ -517,12 +497,8 @@ class PhoneCallSystem:
                 if not text:
                     continue
                 
-                # Determine label width for this speaker so text doesn't collide
-                speaker_label = self.active_call.caller_name if speaker == "caller" else "You"
-                # Use a neutral color just for measuring width
-                speaker_surface_tmp = font_speaker.render(speaker_label + ":", True, (255, 255, 255))
-                label_width = speaker_surface_tmp.get_width()
-                available_width = max_width - (label_width + 20)
+                # Determine available width based on shared label column
+                available_width = max_width - (label_column_width + 20)
                 
                 # Wrap text to calculate height
                 words = text.split(' ')
@@ -587,18 +563,17 @@ class PhoneCallSystem:
                     speaker_color = (150, 255, 150)  # Light green for player
                     text_color = (255, 255, 255)
                 
-                # Draw speaker label
+                # Draw speaker label (left column)
                 speaker_label = self.active_call.caller_name if speaker == "caller" else "You"
                 speaker_surface = font_speaker.render(speaker_label + ":", True, speaker_color)
-                label_width = speaker_surface.get_width()
-                text_x = self.conv_x + 10 + label_width + 10
-                available_width = max_width - (label_width + 20)
                 
                 # Only draw if within visible bounds
                 if message_y >= content_y - 20:
-                    screen.blit(speaker_surface, (self.conv_x + 10, message_y))
+                    # Right-align label text within the label column
+                    label_x = self.conv_x + 10 + (label_column_width - speaker_surface.get_width())
+                    screen.blit(speaker_surface, (label_x, message_y))
                 
-                # Wrap text
+                # Wrap text within the text column
                 words = text.split(' ')
                 lines = []
                 current_line = ""
@@ -620,7 +595,7 @@ class PhoneCallSystem:
                     line_y = message_y + i * line_height
                     if line_y >= content_y - 20 and line_y <= content_y + content_height:
                         line_surface = font_conv.render(line, True, text_color)
-                        screen.blit(line_surface, (text_x, line_y))
+                        screen.blit(line_surface, (text_column_x, line_y))
                 
                 # Add typing cursor for current message
                 is_current = (current_message and 
@@ -628,7 +603,7 @@ class PhoneCallSystem:
                              len(message.get("text", "")) > 0 and
                              message.get("text", "").startswith(current_message.get("text", "")))
                 if is_current and not self.active_call.message_complete:
-                    cursor_x = text_x
+                    cursor_x = text_column_x
                     if lines:
                         last_line = lines[-1]
                         last_line_surface = font_conv.render(last_line, True, text_color)

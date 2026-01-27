@@ -15,6 +15,8 @@ class ActivityLogWindow:
         self.height = height
         self.assets_path = assets_path
         self.z_index = z_index
+        # Title attribute so startup animation can render a generic titlebar
+        self.title = "Activity Log"
         self.dragging = False
         self.drag_offset = (0, 0)
         self.is_blocked = False
@@ -248,3 +250,8 @@ class ActivityLogWindow:
         # Draw border
         pygame.draw.rect(screen, (180, 180, 180), 
                         pygame.Rect(self.position[0], self.position[1], self.width, self.height), 2)
+
+    def render_for_startup(self, screen):
+        """Simplified render used during startup animations (no progress needed)"""
+        # During startup, just show the window frame, titlebar, and empty body with 0% progress
+        self.render(screen, progress=0.0)

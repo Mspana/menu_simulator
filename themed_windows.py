@@ -672,6 +672,8 @@ class MessagesWindow(ThemedWindow):
         self.is_reply_complete = False
         self.reply_options = ["Okay", "Got it", "Thanks", "Will do", "Sure thing"]
         self.selected_reply_option = None
+        # Events to report back to the game (e.g., for progress updates)
+        self.sent_reply_events = []
     
     def add_message(self, contact, message):
         """Add a message from a contact"""
@@ -751,6 +753,8 @@ class MessagesWindow(ThemedWindow):
                     self.conversations[self.selected_contact].append(self.reply_text)
                     # Mark conversation as replied to
                     self.conversation_replied[self.selected_contact] = True
+                    # Record that a reply was sent so the game can grant progress
+                    self.sent_reply_events.append("You replied in Messages")
                 # Reset reply state
                 self.replying = False
                 self.selected_reply_option = None
@@ -940,6 +944,8 @@ class SlackWindow(ThemedWindow):
             "# fundraising": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),
             "# random": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),
         }
+        # Events to report back to the game (for small progress updates)
+        self.sent_reply_events = []
         
         # Reply state
         self.replying = False
@@ -1025,6 +1031,8 @@ class SlackWindow(ThemedWindow):
                     "user": "matt",
                     "text": self.reply_text
                 })
+                # Record that a reply was sent so the game can grant progress
+                self.sent_reply_events.append("You replied in Slack")
                 # Reset reply state
                 self.replying = False
                 self.selected_reply_option = None
@@ -1203,6 +1211,8 @@ class DiscordWindow(ThemedWindow):
         self.is_reply_complete = False
         self.reply_options = ["Okay", "Got it", "Thanks", "Will do", "Sure thing"]
         self.selected_reply_option = None
+        # Events to report back to the game (for small progress updates)
+        self.sent_reply_events = []
     
     def add_message(self, channel, user, text):
         """Add a message to a channel"""
@@ -1278,6 +1288,8 @@ class DiscordWindow(ThemedWindow):
                     "user": "matt",
                     "text": self.reply_text
                 })
+                # Record that a reply was sent so the game can grant progress
+                self.sent_reply_events.append("You replied in Discord")
                 # Reset reply state
                 self.replying = False
                 self.selected_reply_option = None

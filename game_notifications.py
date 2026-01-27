@@ -190,6 +190,8 @@ class GameNotificationSystem:
     
     def __init__(self):
         self.active_notifications = {}  # game_type -> GameNotification
+        # Queue of completed mini-games (e.g., "ftl", "zomboid") for the Game to consume
+        self.completed_events = []
     
     def trigger_notification(self, game_type, window, menus_list=None):
         """Trigger a notification for a game window"""
@@ -211,14 +213,16 @@ class GameNotificationSystem:
     
     def update(self):
         """Update all active notifications"""
-        for notification in list(self.active_notifications.values()):
+        for game_type, notification in list(self.active_notifications.items()):
+            # Track whether this notification had a completion message before update
+            had_completion_message = bool(notification.completion_message)
             notification.update()
+            if had_completion_message and not notification.active:
+                # Mini-game was completed and has now fully finished/faded
+                self.completed_events.append(game_type)
             if not notification.active:
                 # Remove completed notifications
-                for game_type, notif in list(self.active_notifications.items()):
-                    if notif == notification:
-                        del self.active_notifications[game_type]
-                        break
+                del self.active_notifications[game_type]
     
     def render(self, screen):
         """Render all active notifications"""
