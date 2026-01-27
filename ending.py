@@ -287,11 +287,11 @@ class EndingScreen:
         exit_rect = exit_surface.get_rect(center=(960, 1050))
         self.screen.blit(exit_surface, exit_rect)
         
-        # Cheering emojis at bottom
-        cheer_font = pygame.font.Font(None, 64)
-        cheer_messages = ["🎉", "🎊", "✨", "👏", "🎈", "🌟"]
-        cheer_index = (self.animation_time // 20) % len(cheer_messages)
-        cheer_text = cheer_messages[cheer_index] * 15
+        # Cheering strip at bottom (ASCII-only to avoid missing glyphs)
+        cheer_font = pygame.font.Font(None, 48)
+        cheer_patterns = ["* * * * *", ">>> >>> >>>", "YAY YAY YAY", "CLAP CLAP CLAP"]
+        cheer_index = (self.animation_time // 30) % len(cheer_patterns)
+        cheer_text = cheer_patterns[cheer_index]
         cheer_surface = cheer_font.render(cheer_text, True, (255, 255, 0))
         cheer_rect = cheer_surface.get_rect(center=(960, 1000))
         self.screen.blit(cheer_surface, cheer_rect)
