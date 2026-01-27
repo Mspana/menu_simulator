@@ -118,7 +118,7 @@ class MessagesNotificationSystem:
         self.notification_interval = random.uniform(10.0, 20.0)  # 10-20 seconds
         
         # Messages templates
-        self.contacts = ["seong-ah", "jar", "halle", "mama velli", "fleece"]
+        self.contacts = ["seong-ah", "jar", "halle", "mama velli", "fleece", "manon", "julian"]
         self.message_templates = [
             "Hey Matt!",
             "How's the conference planning going?",

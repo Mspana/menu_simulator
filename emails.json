@@ -101,6 +101,26 @@
       ]
     },
     {
+      "sender": "manon@conference.org",
+      "subject": "Quick Check-In",
+      "message": "Hey Matt! Just wanted to check in and see how you're doing. I've been thinking about you and wanted to reach out. Hope everything is going well with the conference planning!",
+      "responses": [
+        "Thanks for checking in!",
+        "Everything's going great!",
+        "I appreciate you reaching out."
+      ]
+    },
+    {
+      "sender": "manon@conference.org",
+      "subject": "Coffee Meeting?",
+      "message": "Hi Matt, I was wondering if you'd be interested in grabbing coffee sometime this week? I'd love to chat about the conference and get to know you better. Let me know what works for you!",
+      "responses": [
+        "That sounds great!",
+        "I'd love to!",
+        "Let me check my schedule."
+      ]
+    },
+    {
       "sender": "conference@org.com",
       "subject": "Parking Arrangements",
       "message": "Matt, parking arrangements have been finalized. We have 200 spots reserved for attendees. The parking map is attached.",
@@ -320,6 +340,26 @@
         "I'll check my DMs right away!",
         "Thanks for the heads up!",
         "I'll look into it."
+      ]
+    },
+    {
+      "sender": "manon <manon@conference.org>",
+      "subject": "You're incredible!",
+      "message": "Hey Matt, I just had to reach out and tell you how amazing you've been with the conference planning. The way you handle everything is so impressive. You're really something special, you know that?",
+      "responses": [
+        "Thank you so much!",
+        "That means a lot!",
+        "I really appreciate that!"
+      ]
+    },
+    {
+      "sender": "manon <manon@conference.org>",
+      "subject": "Can't stop thinking about you",
+      "message": "Matt, I know this might be a bit forward, but I can't stop thinking about you. The way you work, your dedication, it's all so attractive. I'd really love to spend more time with you.",
+      "responses": [
+        "That's really sweet!",
+        "I'd like that too!",
+        "Thank you for saying that!"
       ]
     }
   ]

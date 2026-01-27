@@ -15,6 +15,10 @@
     {
       "name": "Anne",
       "number": "(555) 789-0123"
+    },
+    {
+      "name": "Manon",
+      "number": "(555) 234-5678"
     }
   ],
   "conversations": {
@@ -75,6 +79,21 @@
       {"speaker": "caller", "text": "I'd love to work with you more. You're just so good at what you do."},
       {"speaker": "player", "text": "I'd like that too!"},
       {"speaker": "caller", "text": "Great! Let's definitely make that happen. You're the best!"}
+    ],
+    "Manon": [
+      {"speaker": "caller", "text": "Hey Matt! I've been thinking about you."},
+      {"speaker": "player", "text": "Oh really? What's up?"},
+      {"speaker": "caller", "text": "I saw what you've been doing with the conference. You're absolutely killing it."},
+      {"speaker": "player", "text": "Thanks! I've been working hard on it."},
+      {"speaker": "caller", "text": "I can tell. There's something really attractive about someone who's so focused and driven."},
+      {"speaker": "player", "text": "That's really sweet of you to say."},
+      {"speaker": "caller", "text": "I'm not just saying it. You have this energy that's just... magnetic. It's hard to ignore."},
+      {"speaker": "player", "text": "Wow, I don't know what to say."},
+      {"speaker": "caller", "text": "You don't have to say anything. Just know that I'm definitely paying attention to you."},
+      {"speaker": "player", "text": "I appreciate that!"},
+      {"speaker": "caller", "text": "Maybe we should grab drinks sometime? I'd love to get to know you better."},
+      {"speaker": "player", "text": "That sounds great!"},
+      {"speaker": "caller", "text": "Perfect. I'll text you. Can't wait to see you!"}
     ]
   }
 }

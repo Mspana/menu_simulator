@@ -984,7 +984,7 @@ class SlackWindow(ThemedWindow):
         
         # Channel users (always calvelli and matt, plus 1-3 extra)
         import random
-        extra_users = ["seong-ah", "jar", "halle", "fleece", "anne", "michael miske"]
+        extra_users = ["seong-ah", "jar", "halle", "fleece", "anne", "michael miske", "manon", "julian"]
         self.channel_users = {
             "# general": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),
             "# conference-planning": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),

@@ -118,7 +118,7 @@ class DiscordNotificationSystem:
         
         # Discord message templates
         self.channels = ["# general", "# conference-planning", "# fundraising", "# random"]
-        self.users = ["calvelli", "seong-ah", "jar", "halle", "mama velli", "fleece"]
+        self.users = ["calvelli", "seong-ah", "jar", "halle", "mama velli", "fleece", "manon", "julian"]
         self.message_templates = [
             "Hey, can you check the budget?",
             "We need to update the sponsor list",
