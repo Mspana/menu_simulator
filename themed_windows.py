@@ -143,12 +143,29 @@ class ThemedWindow:
         screen.blit(self.close_icon, self.close_button_rect.topleft)
         screen.blit(self.minimize_icon, self.minimize_button_rect.topleft)
     
-    def render(self, screen):
-        """Render the window - override in subclasses"""
-        screen.blit(self.background_surface, self.position)
-        self.render_titlebar(screen)
-        pygame.draw.rect(screen, (180, 180, 180), 
-                        pygame.Rect(self.position[0], self.position[1], self.width, self.height), 2)
+    def render(self, screen=None):
+        """Render the window - override in subclasses
+        If screen is None, render to self.background_surface (for startup animation)
+        """
+        target = screen if screen is not None else self.background_surface
+        if screen is None:
+            # Clear and render to background surface
+            self.background_surface.fill((240, 240, 240))
+        
+        target.blit(self.background_surface, (0, 0) if screen is None else self.position)
+        if screen is not None:
+            self.render_titlebar(screen)
+        else:
+            # Render titlebar to background surface
+            titlebar_rect = pygame.Rect(0, 0, self.width, self.titlebar_height)
+            pygame.draw.rect(self.background_surface, (200, 200, 200), titlebar_rect)
+            font = pygame.font.Font(None, 20)
+            title_text = font.render(self.title, True, (0, 0, 0))
+            text_y = (self.titlebar_height - title_text.get_height()) // 2
+            self.background_surface.blit(title_text, (10, text_y))
+        
+        border_rect = pygame.Rect(0, 0, self.width, self.height) if screen is None else pygame.Rect(self.position[0], self.position[1], self.width, self.height)
+        pygame.draw.rect(target, (180, 180, 180), border_rect, 2)
 
 
 class FTLWindow(ThemedWindow):
@@ -1248,10 +1265,9 @@ class DiscordWindow(ThemedWindow):
         # Check send button
         if self.replying and self.is_reply_complete:
             reply_area_y = self.position[1] + self.height - 90
-            msg_x = self.position[0] + sidebar_width + 10
             send_button_rect = pygame.Rect(
-                msg_x,
-                reply_area_y - 5,  # Below the typing box
+                self.position[0] + self.width - 110,  # Match render position
+                reply_area_y - 50,  # Match render position
                 100,
                 40
             )

@@ -301,6 +301,26 @@
         "I'm glad the volunteers are all set!",
         "I worked hard to coordinate everyone."
       ]
+    },
+    {
+      "sender": "matt <matt@conference.org>",
+      "subject": "Your vibecoding is incredible!",
+      "message": "Hey Matt, just wanted to reach out and say your vibecoding has been absolutely incredible. The way you've been handling everything is so smooth and efficient. Keep up the amazing work!",
+      "responses": [
+        "Thanks! I've been vibecoding hard.",
+        "I appreciate that! The vibes are strong.",
+        "Thanks, I'm really in the zone!"
+      ]
+    },
+    {
+      "sender": "julian <julian@conference.org>",
+      "subject": "Check your DMs - crazy shit!",
+      "message": "Yo Matt, you need to check your DMs ASAP. I found some absolutely crazy shit that you're going to want to see. This is wild. Get back to me when you can!",
+      "responses": [
+        "I'll check my DMs right away!",
+        "Thanks for the heads up!",
+        "I'll look into it."
+      ]
     }
   ]
 }

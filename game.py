@@ -7,6 +7,7 @@ import pygame
 import sys
 import os
 import argparse
+import math
 from themed_windows import (FTLWindow, ZomboidWindow, InventoryWindow, 
                            OutlookWindow, MessagesWindow, SlackWindow, DiscordWindow)
 from email_view_window import EmailViewWindow
@@ -65,9 +66,8 @@ class Game:
         
         # Load assets
         self.assets_path = os.path.join(os.path.dirname(__file__), "assets_pack")
-        self.background = pygame.image.load(
-            os.path.join(self.assets_path, "backgrounds", "desktop_workspace_background_1920x1080.png")
-        ).convert()
+        # Create classic Windows-style island background
+        self.background = self._create_island_background()
         
         # Game state
         self.game_state = GameState()
@@ -194,7 +194,7 @@ class Game:
                         self.showing_start_screen = False
                         self.showing_startup_animation = True
                         import time
-                        self.startup_animation = StartupAnimation(self.screen)
+                        self.startup_animation = StartupAnimation(self.screen, self.menus)
                     continue
                 
                 if event.key == pygame.K_ESCAPE:
@@ -233,7 +233,7 @@ class Game:
                         if self.start_screen.handle_click(event.pos):
                             self.showing_start_screen = False
                             self.showing_startup_animation = True
-                            self.startup_animation = StartupAnimation(self.screen)
+                            self.startup_animation = StartupAnimation(self.screen, self.menus)
                         continue
                     
                     if not self.showing_startup_animation:
@@ -796,6 +796,89 @@ class Game:
                 self.discord_interrupt.render(self.screen)
         
         pygame.display.flip()
+    
+    def _create_island_background(self):
+        """Create a classic Windows-style island background with ocean and palm trees"""
+        background = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        
+        # Draw sky gradient (light blue to lighter blue)
+        for y in range(SCREEN_HEIGHT // 2):
+            ratio = y / (SCREEN_HEIGHT // 2)
+            r = int(135 + (120 * ratio))  # 135 to 255
+            g = int(206 + (49 * ratio))   # 206 to 255
+            b = int(250)  # Keep blue constant
+            pygame.draw.line(background, (r, g, b), (0, y), (SCREEN_WIDTH, y))
+        
+        # Draw ocean (blue gradient)
+        ocean_start = SCREEN_HEIGHT // 2
+        for y in range(ocean_start, SCREEN_HEIGHT):
+            ratio = (y - ocean_start) / (SCREEN_HEIGHT - ocean_start)
+            # Ocean blue gradient
+            r = int(30 + (20 * ratio))
+            g = int(144 + (30 * ratio))
+            b = int(255 - (30 * ratio))
+            pygame.draw.line(background, (r, g, b), (0, y), (SCREEN_WIDTH, y))
+        
+        # Draw circular island (brown/tan)
+        island_center_x = SCREEN_WIDTH // 2
+        island_center_y = SCREEN_HEIGHT // 2 + 100
+        island_radius = 320  # Increased from 200 to make island bigger
+        
+        # Island base (ellipse, wider than tall)
+        island_rect = pygame.Rect(
+            island_center_x - island_radius,
+            island_center_y - island_radius // 2,
+            island_radius * 2,
+            island_radius
+        )
+        pygame.draw.ellipse(background, (139, 90, 43), island_rect)  # Saddle brown
+        pygame.draw.ellipse(background, (160, 120, 60), island_rect, 2)  # Lighter border
+        
+        # Draw three palm trees (spread out more for bigger island)
+        tree_positions = [
+            (island_center_x - 120, island_center_y - 30),
+            (island_center_x, island_center_y - 40),
+            (island_center_x + 120, island_center_y - 30)
+        ]
+        
+        for tree_x, tree_y in tree_positions:
+            # Draw trunk (brown rectangle) - much bigger
+            trunk_width = 20
+            trunk_height = 120
+            trunk_rect = pygame.Rect(
+                tree_x - trunk_width // 2,
+                tree_y - trunk_height,
+                trunk_width,
+                trunk_height
+            )
+            pygame.draw.rect(background, (101, 67, 33), trunk_rect)  # Brown trunk
+            
+            # Draw palm fronds (green leaves) - much bigger
+            frond_color = (34, 139, 34)  # Forest green
+            num_fronds = 8
+            frond_length = 80
+            
+            for i in range(num_fronds):
+                angle = (i * 360 / num_fronds) - 90  # Start from top
+                angle_rad = math.radians(angle)
+                
+                # Draw frond as a line with some width
+                end_x = tree_x + frond_length * math.cos(angle_rad)
+                end_y = tree_y - trunk_height + frond_length * math.sin(angle_rad)
+                
+                # Draw multiple lines to make frond thicker
+                for offset in range(-4, 5):
+                    offset_x = offset * math.cos(angle_rad + math.pi / 2)
+                    offset_y = offset * math.sin(angle_rad + math.pi / 2)
+                    pygame.draw.line(
+                        background,
+                        frond_color,
+                        (int(tree_x + offset_x), int(tree_y - trunk_height + offset_y)),
+                        (int(end_x + offset_x), int(end_y + offset_y)),
+                        5
+                    )
+        
+        return background
     
     def run(self):
         """Main game loop"""

@@ -333,11 +333,9 @@ class PhoneCallSystem:
             else:
                 bar_color = (100, 100, 100)  # Gray when silent
             
-            # Draw bar
+            # Draw bar (no border)
             pygame.draw.rect(screen, bar_color, 
                            (bar_x, bar_y, bar_width, bar_height))
-            pygame.draw.rect(screen, (150, 150, 150), 
-                           (bar_x, bar_y, bar_width, bar_height), 1)
     
     def render(self, screen):
         """Render phone call popup and conversation"""
@@ -441,10 +439,26 @@ class PhoneCallSystem:
             )
             pygame.draw.rect(screen, (60, 60, 60), title_bar)
             
-            # Caller name in title
+            # Caller name in title (handle long names like "Michael Miske")
             font_small = pygame.font.Font(None, 18)
-            title_text = font_small.render(f"Call with {self.active_call.caller_name}", True, (255, 255, 255))
-            screen.blit(title_text, (self.conv_x + 10, title_bar_y + 8))
+            caller_name = self.active_call.caller_name
+            if len(caller_name) > 12:  # If name is long, split it
+                # Try to split on space
+                name_parts = caller_name.split(' ', 1)
+                if len(name_parts) == 2:
+                    # Two lines
+                    title_text1 = font_small.render(f"Call with {name_parts[0]}", True, (255, 255, 255))
+                    title_text2 = font_small.render(name_parts[1], True, (255, 255, 255))
+                    screen.blit(title_text1, (self.conv_x + 10, title_bar_y + 5))
+                    screen.blit(title_text2, (self.conv_x + 10, title_bar_y + 20))
+                else:
+                    # Single line (no space to split on)
+                    title_text = font_small.render(f"Call with {caller_name}", True, (255, 255, 255))
+                    screen.blit(title_text, (self.conv_x + 10, title_bar_y + 8))
+            else:
+                # Short name, single line
+                title_text = font_small.render(f"Call with {caller_name}", True, (255, 255, 255))
+                screen.blit(title_text, (self.conv_x + 10, title_bar_y + 8))
             
             # Call duration indicator
             if self.active_call.start_time:
@@ -503,6 +517,13 @@ class PhoneCallSystem:
                 if not text:
                     continue
                 
+                # Determine label width for this speaker so text doesn't collide
+                speaker_label = self.active_call.caller_name if speaker == "caller" else "You"
+                # Use a neutral color just for measuring width
+                speaker_surface_tmp = font_speaker.render(speaker_label + ":", True, (255, 255, 255))
+                label_width = speaker_surface_tmp.get_width()
+                available_width = max_width - (label_width + 20)
+                
                 # Wrap text to calculate height
                 words = text.split(' ')
                 lines = []
@@ -511,7 +532,7 @@ class PhoneCallSystem:
                 for word in words:
                     test_line = current_line + (" " if current_line else "") + word
                     test_surface = font_conv.render(test_line, True, (255, 255, 255))
-                    if test_surface.get_width() <= max_width - 70:
+                    if test_surface.get_width() <= available_width:
                         current_line = test_line
                     else:
                         if current_line:
@@ -569,6 +590,9 @@ class PhoneCallSystem:
                 # Draw speaker label
                 speaker_label = self.active_call.caller_name if speaker == "caller" else "You"
                 speaker_surface = font_speaker.render(speaker_label + ":", True, speaker_color)
+                label_width = speaker_surface.get_width()
+                text_x = self.conv_x + 10 + label_width + 10
+                available_width = max_width - (label_width + 20)
                 
                 # Only draw if within visible bounds
                 if message_y >= content_y - 20:
@@ -582,7 +606,7 @@ class PhoneCallSystem:
                 for word in words:
                     test_line = current_line + (" " if current_line else "") + word
                     test_surface = font_conv.render(test_line, True, text_color)
-                    if test_surface.get_width() <= max_width - 70:
+                    if test_surface.get_width() <= available_width:
                         current_line = test_line
                     else:
                         if current_line:
@@ -596,7 +620,7 @@ class PhoneCallSystem:
                     line_y = message_y + i * line_height
                     if line_y >= content_y - 20 and line_y <= content_y + content_height:
                         line_surface = font_conv.render(line, True, text_color)
-                        screen.blit(line_surface, (self.conv_x + 70, line_y))
+                        screen.blit(line_surface, (text_x, line_y))
                 
                 # Add typing cursor for current message
                 is_current = (current_message and 
@@ -604,13 +628,13 @@ class PhoneCallSystem:
                              len(message.get("text", "")) > 0 and
                              message.get("text", "").startswith(current_message.get("text", "")))
                 if is_current and not self.active_call.message_complete:
-                    cursor_x = self.conv_x + 70
+                    cursor_x = text_x
                     if lines:
                         last_line = lines[-1]
                         last_line_surface = font_conv.render(last_line, True, text_color)
                         cursor_x += last_line_surface.get_width()
                     else:
-                        cursor_x += font_speaker.render(speaker_label + ":", True, speaker_color).get_width()
+                        cursor_x += speaker_surface.get_width()
                     
                     cursor_y = message_y + (len(lines) - 1) * line_height if lines else message_y
                     if cursor_y >= content_y - 20 and cursor_y <= content_y + content_height:
