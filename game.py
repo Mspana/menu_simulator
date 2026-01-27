@@ -34,6 +34,28 @@ from startup_animation import StartupAnimation
 pygame.init()
 pygame.mixer.init()
 
+# Configure global font to use Inter instead of the default system font
+try:
+    _real_font_ctor = pygame.font.Font
+    _fonts_dir = os.path.join(
+        os.path.dirname(__file__),
+        "assets_pack",
+        "fonts",
+        "Inter",
+    )
+    _inter_path = os.path.join(_fonts_dir, "Inter-VariableFont_opsz,wght.ttf")
+
+    def _inter_font(path, size):
+        # When callers pass None, use our Inter font instead
+        if path is None:
+            return _real_font_ctor(_inter_path, size)
+        return _real_font_ctor(path, size)
+
+    pygame.font.Font = _inter_font
+except Exception:
+    # Fallback gracefully to default font if Inter isn't available
+    pass
+
 # Constants
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
