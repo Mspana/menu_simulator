@@ -20,28 +20,28 @@ def _load_emails():
 
 REGULAR_EMAILS, CONGRATULATORY_EMAILS = _load_emails()
 
-# Calvelli's activity messages
+# Calvelli's activity messages (more basic and exasperated)
 CALVELLI_ACTIVITIES = [
-    "Calvelli secured a $5,000 sponsorship",
-    "Calvelli finalized the venue booking",
-    "Calvelli sent out 50 fundraising emails",
-    "Calvelli updated the budget spreadsheet",
-    "Calvelli confirmed 3 keynote speakers",
-    "Calvelli organized the catering menu",
-    "Calvelli set up the registration system",
-    "Calvelli coordinated with 10 vendors",
-    "Calvelli drafted the conference schedule",
-    "Calvelli reached out to media partners",
-    "Calvelli booked the AV equipment",
-    "Calvelli confirmed the event insurance",
-    "Calvelli arranged transportation logistics",
-    "Calvelli finalized the marketing materials",
-    "Calvelli secured 2 more sponsors",
-    "Calvelli updated the attendee list",
-    "Calvelli scheduled all breakout sessions",
-    "Calvelli coordinated volunteer assignments",
-    "Calvelli prepared the welcome packets",
-    "Calvelli confirmed parking arrangements",
+    "Calvelli did the sponsorship thing",
+    "Calvelli booked the venue I guess",
+    "Calvelli sent some emails",
+    "Calvelli fixed the spreadsheet again",
+    "Calvelli got the speakers",
+    "Calvelli handled the food",
+    "Calvelli set up registration",
+    "Calvelli talked to vendors",
+    "Calvelli made a schedule",
+    "Calvelli contacted media",
+    "Calvelli got the AV stuff",
+    "Calvelli did the insurance",
+    "Calvelli arranged transport",
+    "Calvelli finished the marketing",
+    "Calvelli found more sponsors",
+    "Calvelli updated the list",
+    "Calvelli scheduled everything",
+    "Calvelli assigned volunteers",
+    "Calvelli made the packets",
+    "Calvelli sorted parking",
 ]
 
 # Extract senders and subjects from loaded emails for backward compatibility

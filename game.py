@@ -7,7 +7,7 @@ import pygame
 import sys
 import os
 from themed_windows import (FTLWindow, ZomboidWindow, InventoryWindow, 
-                           OutlookWindow, MessagesWindow, SlackWindow)
+                           OutlookWindow, MessagesWindow, SlackWindow, DiscordWindow)
 from email_view_window import EmailViewWindow
 from reply_window import ReplyWindow
 from milestone_notifications import MilestoneNotificationSystem
@@ -19,6 +19,8 @@ from calvelli_log import CalvelliLog
 from activity_log_window import ActivityLogWindow
 from email_notifications import EmailNotificationSystem
 from outlook_email_system import OutlookEmailSystem
+from slack_notifications import SlackNotificationSystem
+from messages_notifications import MessagesNotificationSystem
 
 # Initialize Pygame
 pygame.init()
@@ -52,6 +54,10 @@ class Game:
         self.discord_interrupt = DiscordInterrupt(self.assets_path)
         self.calvelli_log = CalvelliLog()
         self.email_notifications = EmailNotificationSystem()
+        self.slack_notifications = SlackNotificationSystem()
+        self.messages_notifications = MessagesNotificationSystem()
+        self.discord_notifications = DiscordNotificationSystem()
+        self.game_notifications = GameNotificationSystem()
         self.milestone_notifications = MilestoneNotificationSystem(SCREEN_WIDTH)
         self.progress_popup_system = ProgressPopupSystem()
         
@@ -132,6 +138,7 @@ class Game:
             ("Outlook", OutlookWindow),
             ("Messages", MessagesWindow),
             ("Slack", SlackWindow),
+            ("Discord", DiscordWindow),
         ]
         
         for i, ((name, window_class), pos) in enumerate(zip(window_configs, positions)):
@@ -170,6 +177,19 @@ class Game:
                     for reply_window in reply_windows:
                         if reply_window.handle_keypress(event.key):
                             break  # Only handle one window at a time
+                    
+                    # Check if Messages, Slack, or Discord window is replying
+                    messages_window = next((m for m in self.menus if isinstance(m, MessagesWindow)), None)
+                    if messages_window and messages_window.handle_keypress(event.key):
+                        continue
+                    
+                    slack_window = next((m for m in self.menus if isinstance(m, SlackWindow)), None)
+                    if slack_window and slack_window.handle_keypress(event.key):
+                        continue
+                    
+                    discord_window = next((m for m in self.menus if isinstance(m, DiscordWindow)), None)
+                    if discord_window and discord_window.handle_keypress(event.key):
+                        continue
             
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left click
@@ -209,21 +229,69 @@ class Game:
             if self.discord_interrupt.handle_click(pos, self.menus):
                 return
         
-        # Check email notifications (for opening email in new window)
+        # Check game notifications (FTL/Zomboid circles) - check early so clicks work even if window is behind
+        if self.game_notifications.handle_click(pos):
+            return
+        
+        # Check email notifications (for opening Outlook and highlighting email)
         clicked_email_data = self.email_notifications.handle_click(pos)
-        if clicked_email_data:
-            # Find the email in Outlook and open it in a new window
-            outlook_window = next((m for m in self.menus if isinstance(m, OutlookWindow)), None)
-            if outlook_window:
-                # Find the email
-                for i, email in enumerate(outlook_window.emails):
-                    if (email.get('type') == 'congratulatory' and 
-                        email.get('subject') == clicked_email_data['subject']):
-                        outlook_window.emails[i]['read'] = True
-                        outlook_window.emails[i]['blinking'] = False  # Stop blinking
-                        # Open in new window
-                        self._open_email_window(outlook_window.emails[i])
-                        break
+        if clicked_email_data is not None:  # None means regular notification was dismissed
+            if clicked_email_data:  # Non-empty dict means congratulatory email was clicked
+                # Find the email in Outlook and highlight it (bring Outlook to front)
+                outlook_window = next((m for m in self.menus if isinstance(m, OutlookWindow)), None)
+                if outlook_window:
+                    # Bring Outlook to front
+                    max_z = max([m.z_index for m in self.menus] + [self.activity_log_window.z_index], default=0)
+                    outlook_window.z_index = max_z + 1
+                    
+                    # Find and highlight the email
+                    for i, email in enumerate(outlook_window.emails):
+                        if (email.get('type') == 'congratulatory' and 
+                            email.get('subject') == clicked_email_data['subject']):
+                            outlook_window.emails[i]['read'] = True
+                            outlook_window.emails[i]['blinking'] = False  # Stop blinking
+                            # Set highlighted email (temporary highlight)
+                            outlook_window.highlighted_email_index = i
+                            outlook_window.highlight_timer = 0  # Reset timer
+                            break
+            return
+        
+        # Check Slack notifications
+        clicked_slack_data = self.slack_notifications.handle_click(pos)
+        if clicked_slack_data:
+            # Add message to Slack window
+            slack_window = next((m for m in self.menus if isinstance(m, SlackWindow)), None)
+            if slack_window:
+                slack_window.add_message(
+                    clicked_slack_data['channel'],
+                    clicked_slack_data['user'],
+                    clicked_slack_data['text']
+                )
+            return
+        
+        # Check Messages notifications
+        clicked_messages_data = self.messages_notifications.handle_click(pos)
+        if clicked_messages_data:
+            # Add message to Messages window
+            messages_window = next((m for m in self.menus if isinstance(m, MessagesWindow)), None)
+            if messages_window:
+                messages_window.add_message(
+                    clicked_messages_data['contact'],
+                    clicked_messages_data['message']
+                )
+            return
+        
+        # Check Discord notifications
+        clicked_discord_data = self.discord_notifications.handle_click(pos)
+        if clicked_discord_data:
+            # Add message to Discord window
+            discord_window = next((m for m in self.menus if isinstance(m, DiscordWindow)), None)
+            if discord_window:
+                discord_window.add_message(
+                    clicked_discord_data['channel'],
+                    clicked_discord_data['user'],
+                    clicked_discord_data['text']
+                )
             return
         
         # Check activity log window
@@ -355,6 +423,39 @@ class Game:
                 import time
                 current_time = time.time()
                 self.progress_popup_system.check_progress_increase(self.game_state.progress, progress_bar_center)
+                
+                # Trigger Slack, Messages, or Discord notification (random choice)
+                import random
+                choice = random.random()
+                if choice < 0.33:
+                    # Add Slack notification
+                    channel = random.choice(self.slack_notifications.channels)
+                    user = random.choice(self.slack_notifications.users)
+                    message = random.choice(self.slack_notifications.message_templates)
+                    self.slack_notifications.add_notification(channel, user, message)
+                elif choice < 0.66:
+                    # Add Messages notification
+                    contact = random.choice(self.messages_notifications.contacts)
+                    message = random.choice(self.messages_notifications.message_templates)
+                    self.messages_notifications.add_notification(contact, message)
+                else:
+                    # Add Discord notification
+                    channel = random.choice(self.discord_notifications.channels)
+                    user = random.choice(self.discord_notifications.users)
+                    message = random.choice(self.discord_notifications.message_templates)
+                    self.discord_notifications.add_notification(channel, user, message)
+                
+                # Randomly trigger FTL or Zomboid notification
+                if random.random() < 0.3:  # 30% chance
+                    game_type = random.choice(["ftl", "zomboid"])
+                    if game_type == "ftl":
+                        ftl_window = next((m for m in self.menus if isinstance(m, FTLWindow)), None)
+                        if ftl_window:
+                            self.game_notifications.trigger_notification("ftl", ftl_window)
+                    else:
+                        zomboid_window = next((m for m in self.menus if isinstance(m, ZomboidWindow)), None)
+                        if zomboid_window:
+                            self.game_notifications.trigger_notification("zomboid", zomboid_window)
         
         # Check if it's time to send a congratulatory email notification
         if self.calvelli_log.should_trigger_email(current_time_ms):
@@ -362,6 +463,12 @@ class Game:
         
         # Update email notifications
         self.email_notifications.update()
+        
+        # Update Slack notifications
+        self.slack_notifications.update()
+        
+        # Update Messages notifications
+        self.messages_notifications.update()
         
         # Check for milestone notifications
         import time
@@ -375,6 +482,13 @@ class Game:
         # Update Outlook email system
         if self.outlook_email_system:
             self.outlook_email_system.update()
+        
+        # Update Outlook window (for highlight timer and blinking)
+        outlook_window = next((m for m in self.menus if isinstance(m, OutlookWindow)), None)
+        if outlook_window:
+            # Use milliseconds for dt (matching blink_timer which uses milliseconds)
+            dt = 16  # Approximate frame time in ms (60 FPS)
+            outlook_window.update(dt)
         
         # Update themed windows (e.g., Zomboid cycling, Outlook blinking)
         dt = self.clock.get_time()
@@ -491,6 +605,70 @@ class Game:
             
             # Draw email notifications (top right)
             self.email_notifications.render(self.screen)
+            
+            # Draw Slack notifications (stacked below email notifications)
+            # Calculate offset based on email notification count
+            email_notification_count = len(self.email_notifications.notifications)
+            slack_y_offset = self.email_notifications.start_y
+            if email_notification_count > 0:
+                # Calculate total height of email notifications
+                for i, notif in enumerate(self.email_notifications.notifications):
+                    if notif.is_dismissing:
+                        slide_progress = abs(notif.y_offset) / 100.0
+                        spacing = int((90 + self.email_notifications.notification_spacing) * (1.0 - slide_progress))
+                    else:
+                        spacing = 90 + self.email_notifications.notification_spacing
+                    slack_y_offset += spacing
+                slack_y_offset += 10  # Gap between systems
+            
+            # Temporarily adjust start_y for rendering
+            original_slack_y = self.slack_notifications.start_y
+            self.slack_notifications.start_y = slack_y_offset
+            self.slack_notifications.render(self.screen)
+            self.slack_notifications.start_y = original_slack_y
+            
+            # Draw Messages notifications (stacked below Slack notifications)
+            messages_y_offset = slack_y_offset
+            slack_notification_count = len(self.slack_notifications.notifications)
+            if slack_notification_count > 0:
+                # Calculate total height of Slack notifications
+                for i, notif in enumerate(self.slack_notifications.notifications):
+                    if notif.is_dismissing:
+                        slide_progress = abs(notif.y_offset) / 100.0
+                        spacing = int((80 + self.slack_notifications.notification_spacing) * (1.0 - slide_progress))
+                    else:
+                        spacing = 80 + self.slack_notifications.notification_spacing
+                    messages_y_offset += spacing
+                messages_y_offset += 10  # Gap between systems
+            
+            # Temporarily adjust start_y for rendering
+            original_messages_y = self.messages_notifications.start_y
+            self.messages_notifications.start_y = messages_y_offset
+            self.messages_notifications.render(self.screen)
+            self.messages_notifications.start_y = original_messages_y
+            
+            # Draw Discord notifications (stacked below Messages notifications)
+            discord_y_offset = messages_y_offset
+            messages_notification_count = len(self.messages_notifications.notifications)
+            if messages_notification_count > 0:
+                # Calculate total height of Messages notifications
+                for i, notif in enumerate(self.messages_notifications.notifications):
+                    if notif.is_dismissing:
+                        slide_progress = abs(notif.y_offset) / 100.0
+                        spacing = int((80 + self.messages_notifications.notification_spacing) * (1.0 - slide_progress))
+                    else:
+                        spacing = 80 + self.messages_notifications.notification_spacing
+                    discord_y_offset += spacing
+                discord_y_offset += 10  # Gap between systems
+            
+            # Temporarily adjust start_y for rendering
+            original_discord_y = self.discord_notifications.start_y
+            self.discord_notifications.start_y = discord_y_offset
+            self.discord_notifications.render(self.screen)
+            self.discord_notifications.start_y = original_discord_y
+            
+            # Draw game notifications (FTL/Zomboid)
+            self.game_notifications.render(self.screen)
             
             # Draw milestone notifications (on top)
             self.milestone_notifications.render(self.screen)

@@ -160,7 +160,7 @@ class ActivityLogWindow:
         # Draw titlebar
         screen.blit(self.titlebar_bg, (self.position[0], self.position[1]))
         font = pygame.font.Font(None, 20)
-        title_text = font.render("Calvelli's Activity Log", True, (255, 255, 255))
+        title_text = font.render("Activity Log", True, (0, 0, 0))  # Black text
         text_y = self.position[1] + (self.titlebar_height - title_text.get_height()) // 2
         screen.blit(title_text, (self.position[0] + 10, text_y))
         screen.blit(self.close_icon, self.close_button_rect.topleft)
@@ -168,24 +168,40 @@ class ActivityLogWindow:
         
         content_y = self.position[1] + self.titlebar_height + 20
         
-        # Draw progress bar
+        # Draw progress text above bar (centered, red with black outline)
+        progress_font = pygame.font.Font(None, 24)
+        progress_text = f"{progress:.1f}%"
+        
+        # Create text with outline
+        text_surface = progress_font.render(progress_text, True, (255, 0, 0))  # Red text
+        outline_surface = progress_font.render(progress_text, True, (0, 0, 0))  # Black outline
+        
+        # Calculate centered position
         bar_x = self.position[0] + 20
+        bar_width = self.width - 40
+        text_x = bar_x + (bar_width - text_surface.get_width()) // 2
+        text_y = content_y - 25
+        
+        # Draw outline (offset by 1 pixel in each direction)
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if dx != 0 or dy != 0:
+                    screen.blit(outline_surface, (text_x + dx, text_y + dy))
+        
+        # Draw main text
+        screen.blit(text_surface, (text_x, text_y))
+        
+        # Draw progress bar
         bar_y = content_y
         screen.blit(self.progress_bar_frame, (bar_x, bar_y))
         
         # Draw progress fill
         progress = min(progress, 100.0)
-        bar_width = self.width - 40
         fill_width = int(bar_width * (progress / 100.0))
         if fill_width > 0:
             fill_surface = pygame.Surface((fill_width, 30), pygame.SRCALPHA)
             fill_surface.blit(self.progress_bar_fill, (0, 0), (0, 0, fill_width, 30))
             screen.blit(fill_surface, (bar_x, bar_y))
-        
-        # Draw progress text
-        progress_font = pygame.font.Font(None, 20)
-        progress_text = progress_font.render(f"Progress: {progress:.1f}%", True, (0, 0, 0))
-        screen.blit(progress_text, (bar_x, bar_y + 35))
         
         # Draw activity log
         log_start_y = content_y + 70
@@ -221,12 +237,11 @@ class ActivityLogWindow:
             text_surface = activity_font.render(message, True, (255, 255, 255))
             screen.blit(text_surface, (self.position[0] + 15, y_offset + 5))
             
-            # Draw progress increase if available
+            # Draw progress increase if available (on new line)
             if progress_increase is not None and progress_increase > 0:
-                increase_font = pygame.font.Font(None, 20)
-                increase_text = increase_font.render(f"+{progress_increase:.1f}%", True, (100, 255, 100))
-                text_rect = increase_text.get_rect()
-                screen.blit(increase_text, (self.position[0] + self.width - 15 - text_rect.width, y_offset + 15))
+                increase_font = pygame.font.Font(None, 18)
+                increase_text = increase_font.render(f"Progress increased: +{progress_increase:.1f}%", True, (100, 255, 100))
+                screen.blit(increase_text, (self.position[0] + 15, y_offset + 25))
             
             y_offset += card_height + 2
         
