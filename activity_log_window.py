@@ -180,7 +180,7 @@ class ActivityLogWindow:
         bar_x = self.position[0] + 20
         bar_width = self.width - 40
         text_x = bar_x + (bar_width - text_surface.get_width()) // 2
-        text_y = content_y - 25
+        text_y = content_y - 15  # Moved down from -25 to -15 to avoid clipping titlebar
         
         # Draw outline (offset by 1 pixel in each direction)
         for dx in [-1, 0, 1]:

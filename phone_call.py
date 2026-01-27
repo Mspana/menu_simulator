@@ -143,11 +143,22 @@ class PhoneCallSystem:
         # Load callers and conversations from JSON file
         self.callers, self.conversation_templates = self._load_phone_calls()
         
-        # Popup dimensions
+        # Popup dimensions (centered)
         self.popup_width = 400
         self.popup_height = 200
-        self.popup_x = 1920 - self.popup_width - 50  # Bottom right
-        self.popup_y = 1080 - self.popup_height - 50
+        self.popup_x = 960 - self.popup_width // 2  # Centered
+        self.popup_y = 540 - self.popup_height // 2  # Centered
+        
+        # Conversation window dimensions
+        self.conv_width = 400
+        self.conv_height = 300  # Taller to show more conversation
+        self.conv_x = 1920 - self.conv_width - 50  # Bottom right
+        self.conv_y = 1080 - self.conv_height - 50
+        
+        # Audio visualization animation
+        self.audio_bars = [0.0] * 8  # 8 bars for visualization
+        self.audio_animation_time = 0.0
+        self.audio_animation_speed = 0.3
     
     def _load_phone_calls(self):
         """Load phone call data from JSON file"""
@@ -171,17 +182,6 @@ class PhoneCallSystem:
                 ("Halle", "(555) 456-7890"),
                 ("Anne", "(555) 789-0123"),
             ], {}
-        
-        # Conversation window dimensions
-        self.conv_width = 500  # Wider to accommodate silhouette and audio bars
-        self.conv_height = 200
-        self.conv_x = 1920 - self.conv_width - 50  # Bottom right
-        self.conv_y = 1080 - self.conv_height - 50
-        
-        # Audio visualization animation
-        self.audio_bars = [0.0] * 8  # 8 bars for visualization
-        self.audio_animation_time = 0.0
-        self.audio_animation_speed = 0.3
     
     def trigger_call(self):
         """Trigger a new incoming call"""
@@ -228,11 +228,7 @@ class PhoneCallSystem:
             # Check answer button
             if self.answer_button_rect and self.answer_button_rect.collidepoint(pos):
                 self.active_call.answer()
-                # Set up conversation window
-                self.conversation_window_rect = pygame.Rect(
-                    self.conv_x, self.conv_y,
-                    self.conv_width, self.conv_height
-                )
+                # Set up conversation window (will be created in render)
                 return True
             
             # Check hang up button
@@ -310,177 +306,112 @@ class PhoneCallSystem:
         
         elif self.active_call.answered:
             # Draw conversation window (bottom right)
-            if self.conversation_window_rect:
-                # Window background
-                pygame.draw.rect(screen, (50, 50, 50), self.conversation_window_rect)
-                pygame.draw.rect(screen, (100, 100, 100), self.conversation_window_rect, 2)
+            # Window background
+            conv_rect = pygame.Rect(self.conv_x, self.conv_y, self.conv_width, self.conv_height)
+            pygame.draw.rect(screen, (50, 50, 50), conv_rect)
+            pygame.draw.rect(screen, (100, 100, 100), conv_rect, 2)
+            
+            # Title bar
+            title_bar = pygame.Rect(
+                self.conv_x, self.conv_y,
+                self.conv_width, 30
+            )
+            pygame.draw.rect(screen, (70, 70, 70), title_bar)
+            
+            # Caller name in title
+            font_small = pygame.font.Font(None, 18)
+            title_text = font_small.render(f"Call with {self.active_call.caller_name}", True, (255, 255, 255))
+            screen.blit(title_text, (self.conv_x + 10, self.conv_y + 8))
+            
+            # Call duration indicator
+            if self.active_call.start_time:
+                elapsed = time.time() - self.active_call.start_time
+                remaining = max(0, self.active_call.conversation_duration - elapsed)
+                duration_text = font_small.render(f"{remaining:.1f}s", True, (150, 150, 150))
+                screen.blit(duration_text, (self.conv_x + self.conv_width - 50, self.conv_y + 8))
+            
+            # Content area (below title bar)
+            content_y = self.conv_y + 35
+            content_height = self.conv_height - 35
+            
+            # Conversation messages area
+            font_conv = pygame.font.Font(None, 16)
+            font_speaker = pygame.font.Font(None, 14)
+            max_width = self.conv_width - 20
+            
+            # Get completed messages and current message
+            completed_messages = self.active_call.get_all_completed_messages()
+            current_message = self.active_call.get_current_message()
+            
+            # Calculate starting Y position (show last few messages)
+            messages_to_show = completed_messages + ([current_message] if current_message else [])
+            # Only show last 3 messages to fit in window
+            messages_to_show = messages_to_show[-3:]
+            
+            # Draw messages from bottom up
+            message_y = content_y + content_height - 10
+            line_height = 18
+            
+            for message in reversed(messages_to_show):
+                if message is None:
+                    continue
                 
-                # Title bar
-                title_bar = pygame.Rect(
-                    self.conv_x, self.conv_y,
-                    self.conv_width, 30
-                )
-                pygame.draw.rect(screen, (70, 70, 70), title_bar)
+                speaker = message["speaker"]
+                text = message["text"]
                 
-                # Caller name in title
-                font_small = pygame.font.Font(None, 18)
-                title_text = font_small.render(f"Call with {self.active_call.caller_name}", True, (255, 255, 255))
-                screen.blit(title_text, (self.conv_x + 10, self.conv_y + 8))
+                # Determine color based on speaker
+                if speaker == "caller":
+                    speaker_color = (150, 200, 255)  # Light blue for caller
+                    text_color = (220, 220, 220)
+                else:
+                    speaker_color = (150, 255, 150)  # Light green for player
+                    text_color = (255, 255, 255)
                 
-                # Call duration indicator
-                if self.active_call.start_time:
-                    elapsed = time.time() - self.active_call.start_time
-                    remaining = max(0, self.active_call.conversation_duration - elapsed)
-                    duration_text = font_small.render(f"{remaining:.1f}s", True, (150, 150, 150))
-                    screen.blit(duration_text, (self.conv_x + self.conv_width - 50, self.conv_y + 8))
+                # Draw speaker label
+                speaker_label = "Caller" if speaker == "caller" else "You"
+                speaker_surface = font_speaker.render(speaker_label + ":", True, speaker_color)
+                screen.blit(speaker_surface, (self.conv_x + 10, message_y - line_height))
                 
-                # Content area (below title bar)
-                content_y = self.conv_y + 35
-                content_height = self.conv_height - 35
+                # Wrap and draw message text
+                words = text.split(' ')
+                lines = []
+                current_line_text = ""
                 
-                # Calculate widths: audio bars 2/3, silhouette 1/3
-                audio_area_width = int(self.conv_width * 2 / 3)
-                silhouette_width = self.conv_width - audio_area_width
-                
-                # Draw audio visualization bars (left side, 2/3 width)
-                audio_x = self.conv_x + 10
-                audio_y = content_y + 10
-                audio_height = content_height - 20
-                bar_width = (audio_area_width - 20) // len(self.audio_bars) - 2
-                bar_spacing = 2
-                
-                for i, bar_value in enumerate(self.audio_bars):
-                    bar_x = audio_x + i * (bar_width + bar_spacing)
-                    bar_max_height = audio_height
-                    bar_current_height = int(bar_value * bar_max_height)
-                    
-                    # Draw bar (centered vertically)
-                    bar_rect = pygame.Rect(
-                        bar_x,
-                        audio_y + (bar_max_height - bar_current_height) // 2,
-                        bar_width,
-                        bar_current_height
-                    )
-                    
-                    # Color gradient: lower bars darker, higher bars brighter
-                    intensity = int(100 + bar_value * 155)
-                    bar_color = (intensity // 2, intensity, intensity // 2)  # Greenish
-                    pygame.draw.rect(screen, bar_color, bar_rect)
-                    pygame.draw.rect(screen, (intensity // 3, intensity // 2, intensity // 3), bar_rect, 1)
-                
-                # Draw silhouette (right side, 1/3 width)
-                silhouette_x = self.conv_x + audio_area_width
-                silhouette_y = content_y
-                silhouette_height = content_height
-                
-                # Draw silhouette background (dark shape)
-                silhouette_rect = pygame.Rect(
-                    silhouette_x,
-                    silhouette_y,
-                    silhouette_width,
-                    silhouette_height
-                )
-                pygame.draw.rect(screen, (30, 30, 30), silhouette_rect)
-                
-                # Draw simple silhouette shape (head and shoulders)
-                center_x = silhouette_x + silhouette_width // 2
-                center_y = silhouette_y + silhouette_height // 2
-                
-                # Head (circle)
-                head_radius = min(silhouette_width // 3, silhouette_height // 4)
-                pygame.draw.circle(screen, (20, 20, 20), (center_x, center_y - head_radius), head_radius)
-                pygame.draw.circle(screen, (40, 40, 40), (center_x, center_y - head_radius), head_radius, 2)
-                
-                # Shoulders (rounded rectangle)
-                shoulder_width = silhouette_width - 20
-                shoulder_height = silhouette_height // 3
-                shoulder_rect = pygame.Rect(
-                    center_x - shoulder_width // 2,
-                    center_y,
-                    shoulder_width,
-                    shoulder_height
-                )
-                pygame.draw.rect(screen, (20, 20, 20), shoulder_rect)
-                pygame.draw.rect(screen, (40, 40, 40), shoulder_rect, 2)
-                
-                # Conversation messages area (below audio bars and silhouette)
-                font_conv = pygame.font.Font(None, 16)
-                font_speaker = pygame.font.Font(None, 14)
-                max_width = self.conv_width - 20
-                
-                # Get completed messages and current message
-                completed_messages = self.active_call.get_all_completed_messages()
-                current_message = self.active_call.get_current_message()
-                
-                # Calculate starting Y position (show last few messages)
-                messages_to_show = completed_messages + ([current_message] if current_message else [])
-                # Only show last 3 messages to fit in window
-                messages_to_show = messages_to_show[-3:]
-                
-                # Draw messages from bottom up
-                message_y = content_y + content_height - 10
-                line_height = 18
-                
-                for message in reversed(messages_to_show):
-                    if message is None:
-                        continue
-                    
-                    speaker = message["speaker"]
-                    text = message["text"]
-                    
-                    # Determine color based on speaker
-                    if speaker == "caller":
-                        speaker_color = (150, 200, 255)  # Light blue for caller
-                        text_color = (220, 220, 220)
+                for word in words:
+                    test_line = current_line_text + (" " if current_line_text else "") + word
+                    test_surface = font_conv.render(test_line, True, text_color)
+                    if test_surface.get_width() <= max_width - 60:  # Leave space for speaker label
+                        current_line_text = test_line
                     else:
-                        speaker_color = (150, 255, 150)  # Light green for player
-                        text_color = (255, 255, 255)
+                        if current_line_text:
+                            lines.append(current_line_text)
+                        current_line_text = word
+                if current_line_text:
+                    lines.append(current_line_text)
+                
+                # Draw text lines
+                for i, line in enumerate(lines):
+                    line_surface = font_conv.render(line, True, text_color)
+                    screen.blit(line_surface, (self.conv_x + 60, message_y - line_height + i * line_height))
+                
+                # Add typing cursor if this is the current message and not complete
+                if message == current_message and not self.active_call.message_complete:
+                    cursor_x = self.conv_x + 60
+                    if lines:
+                        last_line = lines[-1]
+                        last_line_surface = font_conv.render(last_line, True, text_color)
+                        cursor_x += last_line_surface.get_width()
+                    else:
+                        cursor_x += font_conv.render(speaker_label + ":", True, text_color).get_width()
                     
-                    # Draw speaker label
-                    speaker_label = "Caller" if speaker == "caller" else "You"
-                    speaker_surface = font_speaker.render(speaker_label + ":", True, speaker_color)
-                    screen.blit(speaker_surface, (self.conv_x + 10, message_y - line_height))
-                    
-                    # Wrap and draw message text
-                    words = text.split(' ')
-                    lines = []
-                    current_line_text = ""
-                    
-                    for word in words:
-                        test_line = current_line_text + (" " if current_line_text else "") + word
-                        test_surface = font_conv.render(test_line, True, text_color)
-                        if test_surface.get_width() <= max_width - 60:  # Leave space for speaker label
-                            current_line_text = test_line
-                        else:
-                            if current_line_text:
-                                lines.append(current_line_text)
-                            current_line_text = word
-                    if current_line_text:
-                        lines.append(current_line_text)
-                    
-                    # Draw text lines
-                    for i, line in enumerate(lines):
-                        line_surface = font_conv.render(line, True, text_color)
-                        screen.blit(line_surface, (self.conv_x + 60, message_y - line_height + i * line_height))
-                    
-                    # Add typing cursor if this is the current message and not complete
-                    if message == current_message and not self.active_call.message_complete:
-                        cursor_x = self.conv_x + 60
-                        if lines:
-                            last_line = lines[-1]
-                            last_line_surface = font_conv.render(last_line, True, text_color)
-                            cursor_x += last_line_surface.get_width()
-                        else:
-                            cursor_x += font_conv.render(speaker_label + ":", True, text_color).get_width()
-                        
-                        # Blinking cursor
-                        if int(time.time() * 2) % 2 == 0:
-                            pygame.draw.line(screen, text_color, 
-                                           (cursor_x, message_y - line_height + (len(lines) - 1) * line_height),
-                                           (cursor_x, message_y - line_height + (len(lines) - 1) * line_height + 14), 2)
-                    
-                    # Move up for next message
-                    message_y -= (len(lines) + 1) * line_height + 5
-                    
-                    if message_y < content_y:
-                        break  # Don't draw outside content area
+                    # Blinking cursor
+                    if int(time.time() * 2) % 2 == 0:
+                        pygame.draw.line(screen, text_color, 
+                                       (cursor_x, message_y - line_height + (len(lines) - 1) * line_height),
+                                       (cursor_x, message_y - line_height + (len(lines) - 1) * line_height + 14), 2)
+                
+                # Move up for next message
+                message_y -= (len(lines) + 1) * line_height + 5
+                
+                if message_y < content_y:
+                    break  # Don't draw outside content area

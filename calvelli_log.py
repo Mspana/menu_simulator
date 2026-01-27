@@ -71,7 +71,7 @@ class CalvelliLog:
         self.progress_applied = False  # Track if we've applied the progress
         # Signal that a congratulatory email should be sent
         self.should_send_email = True
-        self.email_delay = random.uniform(3.0, 10.0)  # 3-10 seconds delay
+        self.email_delay = random.uniform(1.0, 3.0)  # 1-3 seconds delay
         self.email_delay_start = current_time_ms / 1000.0  # Convert to seconds
     
     def get_progress_increase(self):

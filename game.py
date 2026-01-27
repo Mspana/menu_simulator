@@ -319,8 +319,31 @@ class Game:
                 
                 # Check if Outlook wants to open an email in a new window
                 if isinstance(menu, OutlookWindow) and menu.email_to_open:
-                    self._open_email_window(menu.email_to_open)
+                    # Check if email is already open
+                    email_data = menu.email_to_open
+                    existing_window = next((w for w in self.menus if isinstance(w, EmailViewWindow) and 
+                                          w.email_data.get('subject') == email_data.get('subject') and
+                                          w.email_data.get('from') == email_data.get('from')), None)
+                    
+                    if existing_window:
+                        # Center the existing window instead of opening a new one
+                        existing_window.position[0] = (SCREEN_WIDTH - existing_window.width) // 2
+                        existing_window.position[1] = (SCREEN_HEIGHT - existing_window.height) // 2
+                        # Bring to front
+                        max_z = max([m.z_index for m in self.menus] + [self.activity_log_window.z_index], default=0)
+                        existing_window.z_index = max_z + 1
+                    else:
+                        # Open new window
+                        self._open_email_window(email_data)
                     menu.email_to_open = None
+                
+                # Check if EmailViewWindow should close
+                if isinstance(menu, EmailViewWindow) and menu.should_close:
+                    if menu in self.menus:
+                        self.menus.remove(menu)
+                    if menu in self.email_view_windows:
+                        self.email_view_windows.remove(menu)
+                    continue
                 
                 # Check if EmailViewWindow wants to open a reply window
                 if isinstance(menu, EmailViewWindow) and menu.reply_to_open:

@@ -96,7 +96,12 @@ class ThemedWindow:
         # Click is within window - bring to front will be handled by game.py
         # But we still need to handle specific interactions
         
-        if self.close_button_rect.collidepoint(pos) or self.minimize_button_rect.collidepoint(pos):
+        if self.close_button_rect.collidepoint(pos):
+            # For email sub-windows, set should_close flag
+            if hasattr(self, 'should_close'):
+                self.should_close = True
+            return True
+        if self.minimize_button_rect.collidepoint(pos):
             return True
         
         if self.titlebar_rect.collidepoint(pos):
@@ -638,6 +643,7 @@ class MessagesWindow(ThemedWindow):
         
         # Start with empty conversations
         self.conversations = {}
+        self.conversation_replied = {}  # Track which conversations have been replied to
         self.selected_contact = None
         self.sidebar_width = 200
         
@@ -671,8 +677,9 @@ class MessagesWindow(ThemedWindow):
                     self.selected_contact = contact
                     return True
         
-        # Check reply button (if contact is selected)
-        if self.selected_contact and not self.replying:
+        # Check reply button (if contact is selected and not already replied)
+        if (self.selected_contact and not self.replying and 
+            not self.conversation_replied.get(self.selected_contact, False)):
             reply_button_y = self.position[1] + self.height - 80
             reply_button_rect = pygame.Rect(
                 self.position[0] + self.sidebar_width + 10,
@@ -725,6 +732,8 @@ class MessagesWindow(ThemedWindow):
                         # Add empty received message to make next one sent
                         self.conversations[self.selected_contact].append("")
                     self.conversations[self.selected_contact].append(self.reply_text)
+                    # Mark conversation as replied to
+                    self.conversation_replied[self.selected_contact] = True
                 # Reset reply state
                 self.replying = False
                 self.selected_reply_option = None
@@ -821,7 +830,7 @@ class MessagesWindow(ThemedWindow):
                     screen.blit(msg_text, text_rect)
                 else:
                     # Sent (blue, right)
-                    bubble_rect = pygame.Rect(self.width - 320, msg_y_pos, 300, 40)
+                    bubble_rect = pygame.Rect(self.position[0] + self.width - 320, msg_y_pos, 300, 40)
                     pygame.draw.rect(screen, (0, 120, 255), bubble_rect)
                     msg_text = font_msg.render(msg, True, (255, 255, 255))
                     text_rect = msg_text.get_rect(center=bubble_rect.center)
@@ -881,13 +890,14 @@ class MessagesWindow(ThemedWindow):
                     text_rect = send_text.get_rect(center=send_button_rect.center)
                     screen.blit(send_text, text_rect)
             else:
-                # Draw reply button
-                reply_button_rect = pygame.Rect(msg_x, reply_area_y, 100, 30)
-                pygame.draw.rect(screen, (0, 120, 255), reply_button_rect)
-                font_button = pygame.font.Font(None, 16)
-                reply_button_text = font_button.render("Reply", True, (255, 255, 255))
-                text_rect = reply_button_text.get_rect(center=reply_button_rect.center)
-                screen.blit(reply_button_text, text_rect)
+                # Draw reply button (only if not already replied)
+                if not self.conversation_replied.get(self.selected_contact, False):
+                    reply_button_rect = pygame.Rect(msg_x, reply_area_y, 100, 30)
+                    pygame.draw.rect(screen, (0, 120, 255), reply_button_rect)
+                    font_button = pygame.font.Font(None, 16)
+                    reply_button_text = font_button.render("Reply", True, (255, 255, 255))
+                    text_rect = reply_button_text.get_rect(center=reply_button_rect.center)
+                    screen.blit(reply_button_text, text_rect)
         
         pygame.draw.rect(screen, (180, 180, 180), 
                         pygame.Rect(self.position[0], self.position[1], self.width, self.height), 2)
