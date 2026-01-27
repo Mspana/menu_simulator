@@ -360,9 +360,29 @@ class PhoneCallSystem:
             font_large = pygame.font.Font(None, 32)
             font_medium = pygame.font.Font(None, 24)
             
-            caller_text = font_large.render(self.active_call.caller_name, True, (0, 0, 0))
-            caller_rect = caller_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 40))
-            screen.blit(caller_text, caller_rect)
+            # Handle long names (like "Michael Miske") by splitting into two lines
+            caller_name = self.active_call.caller_name
+            if len(caller_name) > 12:  # If name is long, split it
+                # Try to split on space
+                name_parts = caller_name.split(' ', 1)
+                if len(name_parts) == 2:
+                    # Two lines
+                    first_line = font_large.render(name_parts[0], True, (0, 0, 0))
+                    second_line = font_large.render(name_parts[1], True, (0, 0, 0))
+                    first_rect = first_line.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 35))
+                    second_rect = second_line.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 55))
+                    screen.blit(first_line, first_rect)
+                    screen.blit(second_line, second_rect)
+                else:
+                    # Single line (no space to split on)
+                    caller_text = font_large.render(caller_name, True, (0, 0, 0))
+                    caller_rect = caller_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 40))
+                    screen.blit(caller_text, caller_rect)
+            else:
+                # Short name, single line
+                caller_text = font_large.render(caller_name, True, (0, 0, 0))
+                caller_rect = caller_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 40))
+                screen.blit(caller_text, caller_rect)
             
             number_text = font_medium.render(self.active_call.caller_number, True, (100, 100, 100))
             number_rect = number_text.get_rect(center=(self.popup_x + self.popup_width // 2, self.popup_y + 75))

@@ -28,20 +28,23 @@ class GameNotification:
         self._generate_circle_positions()
     
     def _generate_circle_positions(self):
-        """Generate random positions for yellow circles within the window"""
+        """Generate random positions for yellow circles within the window (relative to window)"""
         if not self.window:
             return
         
-        content_y = self.window.position[1] + self.window.titlebar_height + 50  # Below instruction bar
-        content_x = self.window.position[0] + 20
-        available_width = self.window.width - 40
-        available_height = self.window.height - self.window.titlebar_height - 100
+        # Store positions relative to window, not absolute screen positions
+        instruction_box_height = 35
+        padding = 20
+        content_y_offset = self.window.titlebar_height + padding + instruction_box_height + padding
+        content_x_offset = padding
+        available_width = self.window.width - (padding * 2)
+        available_height = self.window.height - self.window.titlebar_height - content_y_offset - padding
         
         for _ in range(self.total_circles):
-            x = content_x + random.randint(50, available_width - 50)
-            y = content_y + random.randint(50, available_height - 50)
+            rel_x = content_x_offset + random.randint(50, max(50, available_width - 50))
+            rel_y = content_y_offset + random.randint(50, max(50, available_height - 50))
             self.circle_positions.append({
-                'pos': (x, y),
+                'rel_pos': (rel_x, rel_y),  # Relative to window position
                 'clicked': False,
                 'radius': 25
             })
@@ -61,14 +64,18 @@ class GameNotification:
     
     def handle_click(self, pos):
         """Handle click on circles"""
-        if not self.active or self.completion_message:
+        if not self.active or self.completion_message or not self.window:
             return False
         
         for circle in self.circle_positions:
             if circle['clicked']:
                 continue
             
-            circle_x, circle_y = circle['pos']
+            # Calculate absolute position from relative position
+            rel_x, rel_y = circle['rel_pos']
+            circle_x = self.window.position[0] + rel_x
+            circle_y = self.window.position[1] + rel_y
+            
             distance = ((pos[0] - circle_x) ** 2 + (pos[1] - circle_y) ** 2) ** 0.5
             
             if distance <= circle['radius']:
@@ -151,17 +158,28 @@ class GameNotification:
         if self.completion_message:
             instruction_text = font_instruction.render(self.completion_message, True, (0, 0, 0))
             instruction_text.set_alpha(self.fade_alpha)
+            text_rect = instruction_text.get_rect(center=instruction_box.center)
+            screen.blit(instruction_text, text_rect)
         else:
-            instruction_text = font_instruction.render("Click the yellow circles!", True, (0, 0, 0))
-        
-        text_rect = instruction_text.get_rect(center=instruction_box.center)
-        screen.blit(instruction_text, text_rect)
+            # Draw "Play [Game]" on first line
+            game_name = "FTL" if self.game_type == "ftl" else "Zomboid"
+            play_text = font_instruction.render(f"Play {game_name}", True, (0, 0, 0))
+            play_rect = play_text.get_rect(center=(instruction_box.centerx, instruction_box.y + 12))
+            screen.blit(play_text, play_rect)
+            
+            # Draw "Click the yellow circles!" on second line
+            circles_text = font_instruction.render("Click the yellow circles!", True, (0, 0, 0))
+            circles_rect = circles_text.get_rect(center=(instruction_box.centerx, instruction_box.y + 28))
+            screen.blit(circles_text, circles_rect)
         
         # Draw yellow circles (if not completed)
         if not self.completion_message:
             for circle in self.circle_positions:
                 if not circle['clicked']:
-                    circle_x, circle_y = circle['pos']
+                    # Calculate absolute position from relative position
+                    rel_x, rel_y = circle['rel_pos']
+                    circle_x = self.window.position[0] + rel_x
+                    circle_y = self.window.position[1] + rel_y
                     pygame.draw.circle(screen, (255, 255, 0), (circle_x, circle_y), circle['radius'])
                     pygame.draw.circle(screen, (200, 200, 0), (circle_x, circle_y), circle['radius'], 3)
 
