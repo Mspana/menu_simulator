@@ -953,23 +953,25 @@ class SlackWindow(ThemedWindow):
                     self.selected_channel = channel
                     return True
         
-        # Check reply button
+        # Check reply button (only if there are messages in the selected channel)
         if not self.replying:
-            reply_button_y = self.position[1] + self.height - 80
-            reply_button_rect = pygame.Rect(
-                self.position[0] + sidebar_width + 10,
-                reply_button_y,
-                100,
-                30
-            )
-            if reply_button_rect.collidepoint(pos):
-                self.replying = True
-                self.selected_reply_option = None
-                self.reply_text = ""
-                self.target_reply = ""
-                self.current_letter_index = 0
-                self.is_reply_complete = False
-                return True
+            channel_messages = [m for m in self.messages if m['channel'] == self.selected_channel]
+            if channel_messages:  # Only show reply button if there are messages
+                reply_button_y = self.position[1] + self.height - 80
+                reply_button_rect = pygame.Rect(
+                    self.position[0] + sidebar_width + 10,
+                    reply_button_y,
+                    100,
+                    30
+                )
+                if reply_button_rect.collidepoint(pos):
+                    self.replying = True
+                    self.selected_reply_option = None
+                    self.reply_text = ""
+                    self.target_reply = ""
+                    self.current_letter_index = 0
+                    self.is_reply_complete = False
+                    return True
         
         # Check reply option buttons
         if self.replying and self.selected_reply_option is None:
@@ -1205,23 +1207,25 @@ class DiscordWindow(ThemedWindow):
                     self.selected_channel = channel
                     return True
         
-        # Check reply button
+        # Check reply button (only if there are messages in the selected channel)
         if not self.replying:
-            reply_button_y = self.position[1] + self.height - 80
-            reply_button_rect = pygame.Rect(
-                self.position[0] + sidebar_width + 10,
-                reply_button_y,
-                100,
-                30
-            )
-            if reply_button_rect.collidepoint(pos):
-                self.replying = True
-                self.selected_reply_option = None
-                self.reply_text = ""
-                self.target_reply = ""
-                self.current_letter_index = 0
-                self.is_reply_complete = False
-                return True
+            channel_messages = [m for m in self.messages if m['channel'] == self.selected_channel]
+            if channel_messages:  # Only show reply button if there are messages
+                reply_button_y = self.position[1] + self.height - 80
+                reply_button_rect = pygame.Rect(
+                    self.position[0] + sidebar_width + 10,
+                    reply_button_y,
+                    100,
+                    30
+                )
+                if reply_button_rect.collidepoint(pos):
+                    self.replying = True
+                    self.selected_reply_option = None
+                    self.reply_text = ""
+                    self.target_reply = ""
+                    self.current_letter_index = 0
+                    self.is_reply_complete = False
+                    return True
         
         # Check reply option buttons
         if self.replying and self.selected_reply_option is None:
