@@ -269,7 +269,7 @@ class EndingScreen:
                 "Calvelli was doing all the work",
                 "while you were a tenured professor.",
                 "",
-                "Thanks for 'helping'!",
+                "Thanks for helping!",
             ]
             
             secret_y = 700

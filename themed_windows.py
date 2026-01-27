@@ -1168,7 +1168,8 @@ class SlackWindow(ThemedWindow):
                                pygame.Rect(self.position[0] + 5, channel_y, sidebar_width - 10, 30))
             
             channel_text = font.render(channel, True, (200, 200, 200))
-            screen.blit(channel_text, (self.position[0] + 15, channel_y + 5))
+            # Slightly closer to the left edge so long names fit
+            screen.blit(channel_text, (self.position[0] + 10, channel_y + 5))
         
         # Draw message area
         msg_x = self.position[0] + sidebar_width + 10
@@ -1478,7 +1479,8 @@ class DiscordWindow(ThemedWindow):
                                pygame.Rect(self.position[0] + 5, channel_y, sidebar_width - 10, 30))
             
             channel_text = font.render(channel, True, (220, 220, 220))
-            screen.blit(channel_text, (self.position[0] + 15, channel_y + 5))
+            # Slightly closer to the left edge so long names fit
+            screen.blit(channel_text, (self.position[0] + 10, channel_y + 5))
         
         # Draw message area
         msg_x = self.position[0] + sidebar_width + 10

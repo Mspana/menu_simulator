@@ -44,11 +44,23 @@ try:
         "Inter",
     )
     _inter_path = os.path.join(_fonts_dir, "Inter-VariableFont_opsz,wght.ttf")
+    _font_cache = {}
 
     def _inter_font(path, size):
-        # When callers pass None, use our Inter font instead
+        """Drop‑in replacement for pygame.font.Font with caching for Inter.
+
+        When callers pass None, we approximate the old default font's visual
+        size by adjusting Inter's point size so the text height matches.
+        """
+        # When callers pass None, use our Inter font (cached per requested size)
         if path is None:
-            return _real_font_ctor(_inter_path, size)
+            if size not in _font_cache:
+                # Use Inter at a size slightly smaller than the requested logical size.
+                # 0.85 keeps layout close to original while making text a bit larger.
+                adjusted_size = max(1, int(round(size * 0.85)))
+                _font_cache[size] = _real_font_ctor(_inter_path, adjusted_size)
+            return _font_cache[size]
+        # For explicit paths, fall back to the real ctor
         return _real_font_ctor(path, size)
 
     pygame.font.Font = _inter_font
@@ -437,34 +449,6 @@ class Game:
                         self.email_view_windows.remove(menu)
                     continue
                 
-                # Check if ReplyWindow should close
-                if isinstance(menu, ReplyWindow) and menu.should_close:
-                    # Update the email in Outlook to mark it as replied
-                    if menu.sent_reply:
-                        outlook_window = next((m for m in self.menus if isinstance(m, OutlookWindow)), None)
-                        if outlook_window:
-                            # Find and update the email
-                            for email in outlook_window.emails:
-                                if (email.get('subject') == menu.email_data.get('subject') and
-                                    email.get('from') == menu.email_data.get('from')):
-                                    email['replied'] = True
-                                    email['reply_text'] = menu.sent_reply
-                                    break
-                        
-                        # Small progress for responding to an email
-                        self._register_small_progress("You responded to an email")
-                    
-                    # Also close the email view window if it's open
-                    email_view_window = next((w for w in self.menus if isinstance(w, EmailViewWindow) and 
-                                            w.email_data.get('subject') == menu.email_data.get('subject')), None)
-                    if email_view_window:
-                        email_view_window.should_close = True
-                    
-                    if menu in self.menus:
-                        self.menus.remove(menu)
-                    if menu in self.email_view_windows:
-                        self.email_view_windows.remove(menu)
-                
                 break
         
         # Update game state based on interactions
@@ -681,6 +665,41 @@ class Game:
             for event_msg in discord_window.sent_reply_events:
                 self._register_small_progress(event_msg)
             discord_window.sent_reply_events.clear()
+        
+        # Check for any ReplyWindow instances that have completed and should close
+        reply_windows = [w for w in self.menus if isinstance(w, ReplyWindow) and getattr(w, "should_close", False)]
+        for reply_window in reply_windows:
+            # If a reply was actually sent, update Outlook and register small progress
+            if reply_window.sent_reply:
+                outlook_window = next((m for m in self.menus if isinstance(m, OutlookWindow)), None)
+                if outlook_window:
+                    # Find and update the corresponding email
+                    for email in outlook_window.emails:
+                        if (email.get('subject') == reply_window.email_data.get('subject') and
+                            email.get('from') == reply_window.email_data.get('from')):
+                            email['replied'] = True
+                            email['reply_text'] = reply_window.sent_reply
+                            break
+                
+                # Small progress entry for responding to an email
+                self._register_small_progress("You responded to an email")
+            
+            # Also close the associated email view window if it's open
+            email_view_window = next(
+                (w for w in self.menus
+                 if isinstance(w, EmailViewWindow)
+                 and w.email_data.get('subject') == reply_window.email_data.get('subject')
+                 and w.email_data.get('from') == reply_window.email_data.get('from')),
+                None,
+            )
+            if email_view_window:
+                email_view_window.should_close = True
+            
+            # Remove the reply window from management lists
+            if reply_window in self.menus:
+                self.menus.remove(reply_window)
+            if reply_window in self.email_view_windows:
+                self.email_view_windows.remove(reply_window)
         
         # If progress has reached 100% and game is not yet marked complete, trigger ending
         if not self.game_complete and self.game_state.progress >= 100.0:

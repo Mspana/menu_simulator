@@ -174,7 +174,8 @@ class PhoneCallSystem:
         # Audio visualization animation
         self.audio_bars = [0.0] * 8  # 8 bars for visualization
         self.audio_animation_time = 0.0
-        self.audio_animation_speed = 0.3
+        # Slow down audio bar animation a bit so movement feels less frantic
+        self.audio_animation_speed = 0.15
     
     def _load_phone_calls(self):
         """Load phone call data from JSON file"""

@@ -21,11 +21,11 @@ class StartScreen:
         self.background = pygame.Surface((self.width, self.height))
         self._draw_gradient_background()
         
-        # Fonts
-        self.title_font = pygame.font.Font(None, 96)
-        self.subtitle_font = pygame.font.Font(None, 36)
-        self.instruction_font = pygame.font.Font(None, 28)
-        self.tagline_font = pygame.font.Font(None, 20)
+        # Fonts (larger main menu typography)
+        self.title_font = pygame.font.Font(None, 128)
+        self.subtitle_font = pygame.font.Font(None, 44)
+        self.instruction_font = pygame.font.Font(None, 36)
+        self.tagline_font = pygame.font.Font(None, 24)
         
         # Animation state
         self.pulse_phase = 0.0
@@ -160,7 +160,13 @@ class StartScreen:
         self.screen.blit(hint_text, hint_rect)
         
         # Version/credit text at bottom
-        credit_y = self.height - 40
-        credit_text = self.tagline_font.render("Menu Simulator v1.0", True, (60, 70, 80))
-        credit_rect = credit_text.get_rect(center=(self.width // 2, credit_y))
-        self.screen.blit(credit_text, credit_rect)
+        credit_y = self.height - 60
+        version_text = self.tagline_font.render("Menu Simulator v1.0", True, (60, 70, 80))
+        version_rect = version_text.get_rect(center=(self.width // 2, credit_y))
+        self.screen.blit(version_text, version_rect)
+        
+        # Author credit just below
+        author_y = credit_y + 20
+        author_text = self.tagline_font.render("A game by gblwrks", True, (80, 90, 100))
+        author_rect = author_text.get_rect(center=(self.width // 2, author_y))
+        self.screen.blit(author_text, author_rect)

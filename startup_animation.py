@@ -191,7 +191,8 @@ class StartupAnimation:
             # Draw login message text
             font = pygame.font.Font(None, 36)
             text = font.render(self.login_message + "...", True, (100, 100, 100))
-            text_rect = text.get_rect(center=(self.width // 2, self.height // 2 - 50))
+            # Move the text a bit further above the spinner to add visual breathing room
+            text_rect = text.get_rect(center=(self.width // 2, self.height // 2 - 80))
             self.screen.blit(text, text_rect)
             
             # Draw spinner (circle with rotating dots)

@@ -172,7 +172,7 @@ class ActivityLogWindow:
         
         # Draw progress text above bar (centered, red with black outline)
         progress_font = pygame.font.Font(None, 24)
-        progress_text = f"Conference Fundraising Progress: {progress:.1f}%"
+        progress_text = f"Fundraising Progress: {progress:.1f}%"
         
         # Create text with outline
         text_surface = progress_font.render(progress_text, True, (255, 0, 0))  # Red text
@@ -182,7 +182,7 @@ class ActivityLogWindow:
         bar_x = self.position[0] + 20
         bar_width = self.width - 40
         text_x = bar_x + (bar_width - text_surface.get_width()) // 2
-        text_y = content_y - 5  # Move text up a little
+        text_y = content_y - 10  # Move text up a little more
         
         # Draw outline (offset by 1 pixel in each direction)
         for dx in [-1, 0, 1]:
@@ -194,7 +194,7 @@ class ActivityLogWindow:
         screen.blit(text_surface, (text_x, text_y))
         
         # Draw progress bar (with space below text)
-        bar_y = content_y + 15  # Move bar down a little to create space
+        bar_y = content_y + 25  # Move bar down a bit more to create extra space
         screen.blit(self.progress_bar_frame, (bar_x, bar_y))
         
         # Draw progress fill
@@ -212,7 +212,7 @@ class ActivityLogWindow:
         
         # Draw activities (most recent at top) - larger cards
         y_offset = log_start_y
-        card_height = 40  # Larger cards
+        card_height = 48  # Slightly taller cards to fit text comfortably
         for i, activity_data in enumerate(reversed(self.activities)):
             if y_offset > self.position[1] + self.height - 20:
                 break  # Don't draw outside window
