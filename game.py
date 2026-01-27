@@ -64,6 +64,8 @@ class Game:
             self.showing_start_screen = False
             self.showing_startup_animation = False
         self.game_started = skip_startup
+        # Track when the game instance was created (for gating early events)
+        self.start_time_ms = pygame.time.get_ticks()
         
         # Load assets
         self.assets_path = os.path.join(os.path.dirname(__file__), "assets_pack")
@@ -393,6 +395,10 @@ class Game:
                         # Center the existing window instead of opening a new one
                         existing_window.position[0] = (SCREEN_WIDTH - existing_window.width) // 2
                         existing_window.position[1] = (SCREEN_HEIGHT - existing_window.height) // 2
+                        # Ensure it is not hidden behind the activity log window
+                        min_x = self.activity_log_window.position[0] + self.activity_log_window.width + 20
+                        if existing_window.position[0] < min_x:
+                            existing_window.position[0] = min_x
                         # Bring to front
                         max_z = max([m.z_index for m in self.menus] + [self.activity_log_window.z_index], default=0)
                         existing_window.z_index = max_z + 1
@@ -566,22 +572,26 @@ class Game:
                         # Then create notification
                         self.discord_notifications.add_notification(channel, user, message)
                 
-                # Randomly trigger FTL or Zomboid notification
-                if random.random() < 0.3:  # 30% chance
-                    game_type = random.choice(["ftl", "zomboid"])
-                    if game_type == "ftl":
-                        ftl_window = next((m for m in self.menus if isinstance(m, FTLWindow)), None)
-                        if ftl_window:
-                            self.game_notifications.trigger_notification("ftl", ftl_window, self.menus)
-                    else:
-                        zomboid_window = next((m for m in self.menus if isinstance(m, ZomboidWindow)), None)
-                        if zomboid_window:
-                            self.game_notifications.trigger_notification("zomboid", zomboid_window, self.menus)
+                # Randomly trigger FTL or Zomboid notification, but not in the first 30 seconds
+                elapsed_ms = current_time_ms - self.start_time_ms
+                if elapsed_ms >= 30000:
+                    if random.random() < 0.15:  # 15% chance (slightly less frequent)
+                        game_type = random.choice(["ftl", "zomboid"])
+                        if game_type == "ftl":
+                            ftl_window = next((m for m in self.menus if isinstance(m, FTLWindow)), None)
+                            if ftl_window:
+                                self.game_notifications.trigger_notification("ftl", ftl_window, self.menus)
+                        else:
+                            zomboid_window = next((m for m in self.menus if isinstance(m, ZomboidWindow)), None)
+                            if zomboid_window:
+                                self.game_notifications.trigger_notification("zomboid", zomboid_window, self.menus)
                 
-                # Randomly trigger phone call (20% chance)
-                if random.random() < 0.2:  # 20% chance
-                    if not (self.phone_call_system.active_call and self.phone_call_system.active_call.active):
-                        self.phone_call_system.trigger_call()
+                # Randomly trigger phone call (20% chance), but not in the first 30 seconds
+                elapsed_ms = current_time_ms - self.start_time_ms
+                if elapsed_ms >= 30000:
+                    if random.random() < 0.2:  # 20% chance
+                        if not (self.phone_call_system.active_call and self.phone_call_system.active_call.active):
+                            self.phone_call_system.trigger_call()
         
         # Check if it's time to send a congratulatory email notification
         if self.calvelli_log.should_trigger_email(current_time_ms):
@@ -696,6 +706,10 @@ class Game:
         import random
         x = 400 + random.randint(-100, 100)
         y = 200 + random.randint(-50, 50)
+        # Ensure the email window does not appear under the activity log window
+        min_x = self.activity_log_window.position[0] + self.activity_log_window.width + 20
+        if x < min_x:
+            x = min_x
         
         # Get max z-index to put new window on top
         max_z = max([m.z_index for m in self.menus] + [self.activity_log_window.z_index], default=0)

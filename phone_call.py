@@ -522,10 +522,10 @@ class PhoneCallSystem:
                 total_height += message_height
             
             # Calculate scroll offset: if messages exceed content area, scroll up
-            # so newest message is always at the bottom
+            # so newest message is always at the bottom, strictly within content box
             scroll_offset = 0
-            if total_height > content_height - 20:  # 20px padding
-                scroll_offset = total_height - (content_height - 20)
+            if total_height > content_height:
+                scroll_offset = total_height - content_height
             
             # Draw messages from top to bottom, starting with scroll offset
             message_y = content_y + 10 - int(scroll_offset)
@@ -547,12 +547,12 @@ class PhoneCallSystem:
                 message_index += 1
                 
                 # Skip if this message is above the visible area
-                if message_y + message_height < content_y:
+                if message_y + message_height <= content_y:
                     message_y += message_height
                     continue
                 
                 # Don't draw if below visible area
-                if message_y > content_y + content_height:
+                if message_y >= content_y + content_height:
                     break
                 
                 # Determine color based on speaker
@@ -568,7 +568,7 @@ class PhoneCallSystem:
                 speaker_surface = font_speaker.render(speaker_label + ":", True, speaker_color)
                 
                 # Only draw if within visible bounds
-                if message_y >= content_y - 20:
+                if message_y >= content_y and message_y < content_y + content_height:
                     # Right-align label text within the label column
                     label_x = self.conv_x + 10 + (label_column_width - speaker_surface.get_width())
                     screen.blit(speaker_surface, (label_x, message_y))
@@ -590,10 +590,10 @@ class PhoneCallSystem:
                 if current_line:
                     lines.append(current_line)
                 
-                # Draw text lines (only if within visible bounds)
+                # Draw text lines (only if within visible bounds of content area)
                 for i, line in enumerate(lines):
                     line_y = message_y + i * line_height
-                    if line_y >= content_y - 20 and line_y <= content_y + content_height:
+                    if line_y >= content_y and line_y < content_y + content_height:
                         line_surface = font_conv.render(line, True, text_color)
                         screen.blit(line_surface, (text_column_x, line_y))
                 
@@ -612,7 +612,7 @@ class PhoneCallSystem:
                         cursor_x += speaker_surface.get_width()
                     
                     cursor_y = message_y + (len(lines) - 1) * line_height if lines else message_y
-                    if cursor_y >= content_y - 20 and cursor_y <= content_y + content_height:
+                    if cursor_y >= content_y and cursor_y < content_y + content_height:
                         if int(time.time() * 2) % 2 == 0:
                             pygame.draw.line(screen, text_color,
                                            (cursor_x, cursor_y),

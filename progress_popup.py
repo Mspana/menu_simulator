@@ -18,6 +18,8 @@ class ProgressPopup:
         self.end_scale = 1.5
         self.start_alpha = 255
         self.end_alpha = 0
+        # Progress of this popup's animation (0.0 -> 1.0)
+        self.progress = 0.0
         
     def update(self, current_time):
         """Update animation state"""
