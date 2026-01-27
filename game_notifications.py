@@ -155,21 +155,22 @@ class GameNotification:
         
         # Draw instruction text
         font_instruction = pygame.font.Font(None, 20)
+        font_play = pygame.font.Font(None, 26)  # Larger font for "Play [Game]"
         if self.completion_message:
             instruction_text = font_instruction.render(self.completion_message, True, (0, 0, 0))
             instruction_text.set_alpha(self.fade_alpha)
             text_rect = instruction_text.get_rect(center=instruction_box.center)
             screen.blit(instruction_text, text_rect)
         else:
-            # Draw "Play [Game]" on first line
+            # Draw "Play [Game]" on first line (larger font)
             game_name = "FTL" if self.game_type == "ftl" else "Zomboid"
-            play_text = font_instruction.render(f"Play {game_name}", True, (0, 0, 0))
-            play_rect = play_text.get_rect(center=(instruction_box.centerx, instruction_box.y + 12))
+            play_text = font_play.render(f"Play {game_name}", True, (0, 0, 0))
+            play_rect = play_text.get_rect(center=(instruction_box.centerx, instruction_box.y + 15))
             screen.blit(play_text, play_rect)
             
             # Draw "Click the yellow circles!" on second line
             circles_text = font_instruction.render("Click the yellow circles!", True, (0, 0, 0))
-            circles_rect = circles_text.get_rect(center=(instruction_box.centerx, instruction_box.y + 28))
+            circles_rect = circles_text.get_rect(center=(instruction_box.centerx, instruction_box.y + 32))
             screen.blit(circles_text, circles_rect)
         
         # Draw yellow circles (if not completed)
