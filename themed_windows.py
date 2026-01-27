@@ -914,6 +914,16 @@ class SlackWindow(ThemedWindow):
         self.messages = []
         self.selected_channel = "# general"
         
+        # Channel users (always calvelli and matt, plus 1-3 extra)
+        import random
+        extra_users = ["seong-ah", "jar", "halle", "fleece", "anne", "michael miske"]
+        self.channel_users = {
+            "# general": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),
+            "# conference-planning": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),
+            "# fundraising": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),
+            "# random": ["calvelli", "matt"] + random.sample(extra_users, random.randint(1, 3)),
+        }
+        
         # Reply state
         self.replying = False
         self.reply_text = ""
@@ -1114,8 +1124,8 @@ class SlackWindow(ThemedWindow):
                     remaining_text = font_typing.render(remaining, True, (200, 200, 200))
                     screen.blit(remaining_text, (msg_x + 5 + typed_text.get_width(), reply_area_y - 45))
                 
-                # Draw send button
-                send_button_rect = pygame.Rect(self.position[0] + self.width - 110, reply_area_y - 50, 100, 40)
+                # Draw send button (below the typing box)
+                send_button_rect = pygame.Rect(msg_x, reply_area_y - 5, 100, 40)
                 send_color = (0, 180, 0) if self.is_reply_complete else (150, 150, 150)
                 pygame.draw.rect(screen, send_color, send_button_rect)
                 pygame.draw.rect(screen, (100, 100, 100), send_button_rect, 1)
@@ -1124,13 +1134,18 @@ class SlackWindow(ThemedWindow):
                 text_rect = send_text.get_rect(center=send_button_rect.center)
                 screen.blit(send_text, text_rect)
         else:
-            # Draw reply button
-            reply_button_rect = pygame.Rect(msg_x, reply_area_y, 100, 30)
-            pygame.draw.rect(screen, (74, 21, 75), reply_button_rect)  # Slack purple
-            font_button = pygame.font.Font(None, 16)
-            reply_text = font_button.render("Reply", True, (255, 255, 255))
-            text_rect = reply_text.get_rect(center=reply_button_rect.center)
-            screen.blit(reply_text, text_rect)
+            # Draw reply button (only if there are messages in the selected channel)
+            channel_messages = [m for m in self.messages if m['channel'] == self.selected_channel]
+            if channel_messages:  # Only show reply button if there are messages
+                # Button is below the typing box area (when replying) or below message area
+                reply_button_y = reply_area_y + 10
+                reply_button_rect = pygame.Rect(msg_x, reply_button_y, 100, 30)
+                pygame.draw.rect(screen, (74, 21, 75), reply_button_rect)  # Slack purple
+                pygame.draw.rect(screen, (50, 10, 50), reply_button_rect, 2)  # Border
+                font_button = pygame.font.Font(None, 16)
+                reply_button_text = font_button.render("Reply", True, (255, 255, 255))
+                text_rect = reply_button_text.get_rect(center=reply_button_rect.center)
+                screen.blit(reply_button_text, text_rect)
         
         # Draw user list sidebar (right)
         user_sidebar_width = 150
@@ -1139,7 +1154,8 @@ class SlackWindow(ThemedWindow):
                         pygame.Rect(self.position[0] + user_sidebar_x, content_y, 
                                   user_sidebar_width, self.height - self.titlebar_height))
         
-        users = ["calvelli", "matt", "seong-ah"]
+        # Show users for selected channel
+        users = self.channel_users.get(self.selected_channel, ["calvelli", "matt"])
         for i, user in enumerate(users):
             user_text = font_small.render(user, True, (0, 0, 0))
             screen.blit(user_text, (self.position[0] + user_sidebar_x + 10, content_y + 20 + i * 30))

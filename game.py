@@ -6,6 +6,7 @@ Main entry point and game loop
 import pygame
 import sys
 import os
+import argparse
 from themed_windows import (FTLWindow, ZomboidWindow, InventoryWindow, 
                            OutlookWindow, MessagesWindow, SlackWindow, DiscordWindow)
 from email_view_window import EmailViewWindow
@@ -24,6 +25,8 @@ from messages_notifications import MessagesNotificationSystem
 from discord_notifications import DiscordNotificationSystem
 from game_notifications import GameNotificationSystem
 from phone_call import PhoneCallSystem
+from start_screen import StartScreen
+from startup_animation import StartupAnimation
 
 # Initialize Pygame
 pygame.init()
@@ -40,11 +43,25 @@ BLACK = (0, 0, 0)
 BLUE = (0, 120, 212)
 
 class Game:
-    def __init__(self):
+    def __init__(self, skip_startup=False):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Menu Simulator - Fundraising for Conference")
         self.clock = pygame.time.Clock()
         self.running = True
+        self.skip_startup = skip_startup
+        
+        # Startup sequence
+        if not skip_startup:
+            self.start_screen = StartScreen(self.screen)
+            self.startup_animation = None
+            self.showing_start_screen = True
+            self.showing_startup_animation = False
+        else:
+            self.start_screen = None
+            self.startup_animation = None
+            self.showing_start_screen = False
+            self.showing_startup_animation = False
+        self.game_started = skip_startup
         
         # Load assets
         self.assets_path = os.path.join(os.path.dirname(__file__), "assets_pack")
@@ -131,7 +148,8 @@ class Game:
             (500, 200),
             (200, 300),
             (400, 250),
-            (600, 180)
+            (600, 180),
+            (700, 220)  # Discord window position
         ]
         
         # Create themed windows
@@ -170,8 +188,21 @@ class Game:
                 self.running = False
             
             elif event.type == pygame.KEYDOWN:
+                # Handle start screen
+                if self.showing_start_screen and self.start_screen:
+                    if self.start_screen.handle_keypress(event.key):
+                        self.showing_start_screen = False
+                        self.showing_startup_animation = True
+                        import time
+                        self.startup_animation = StartupAnimation(self.screen)
+                    continue
+                
                 if event.key == pygame.K_ESCAPE:
-                    self.running = False
+                    if self.game_complete:
+                        self.running = False
+                    # Don't exit during startup
+                    if not self.showing_start_screen and not self.showing_startup_animation:
+                        self.running = False
                 elif event.key == pygame.K_TAB:
                     # Cycle through windows (Alt+Tab style)
                     self._cycle_windows()
@@ -197,9 +228,18 @@ class Game:
             
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left click
-                    self._handle_click(event.pos)
-                    if 'click' in self.sounds:
-                        self.sounds['click'].play()
+                    # Handle start screen
+                    if self.showing_start_screen and self.start_screen:
+                        if self.start_screen.handle_click(event.pos):
+                            self.showing_start_screen = False
+                            self.showing_startup_animation = True
+                            self.startup_animation = StartupAnimation(self.screen)
+                        continue
+                    
+                    if not self.showing_startup_animation:
+                        self._handle_click(event.pos)
+                        if 'click' in self.sounds:
+                            self.sounds['click'].play()
             
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -425,6 +465,17 @@ class Game:
     
     def update(self):
         """Update game state"""
+        # Handle startup animation
+        if self.showing_startup_animation and self.startup_animation:
+            dt = self.clock.get_time() / 1000.0  # Convert to seconds
+            if self.startup_animation.update(dt):
+                self.showing_startup_animation = False
+                self.game_started = True
+        
+        # Don't update game if not started
+        if not self.game_started:
+            return
+        
         if self.game_complete:
             if self.ending_screen:
                 self.ending_screen.update()
@@ -526,6 +577,9 @@ class Game:
         
         # Update progress popup system
         self.progress_popup_system.update(current_time)
+        
+        # Update phone call system
+        self.phone_call_system.update(current_time)
         
         # Update Outlook email system
         if self.outlook_email_system:
@@ -637,6 +691,22 @@ class Game:
     
     def render(self):
         """Render the game"""
+        # Show start screen
+        if self.showing_start_screen and self.start_screen:
+            self.start_screen.render()
+            pygame.display.flip()
+            return
+        
+        # Show startup animation
+        if self.showing_startup_animation and self.startup_animation:
+            self.startup_animation.render(self.background)
+            pygame.display.flip()
+            return
+        
+        # Don't render game if not started
+        if not self.game_started:
+            return
+        
         # Draw background
         self.screen.blit(self.background, (0, 0))
         
@@ -668,13 +738,9 @@ class Game:
             email_notification_count = len(self.email_notifications.notifications)
             slack_y_offset = self.email_notifications.start_y
             if email_notification_count > 0:
-                # Calculate total height of email notifications
+                # Calculate total height of email notifications (horizontal slide doesn't affect vertical spacing)
                 for i, notif in enumerate(self.email_notifications.notifications):
-                    if notif.is_dismissing:
-                        slide_progress = abs(notif.y_offset) / 100.0
-                        spacing = int((90 + self.email_notifications.notification_spacing) * (1.0 - slide_progress))
-                    else:
-                        spacing = 90 + self.email_notifications.notification_spacing
+                    spacing = 90 + self.email_notifications.notification_spacing
                     slack_y_offset += spacing
                 slack_y_offset += 10  # Gap between systems
             
@@ -688,13 +754,9 @@ class Game:
             messages_y_offset = slack_y_offset
             slack_notification_count = len(self.slack_notifications.notifications)
             if slack_notification_count > 0:
-                # Calculate total height of Slack notifications
+                # Calculate total height of Slack notifications (horizontal slide doesn't affect vertical spacing)
                 for i, notif in enumerate(self.slack_notifications.notifications):
-                    if notif.is_dismissing:
-                        slide_progress = abs(notif.y_offset) / 100.0
-                        spacing = int((80 + self.slack_notifications.notification_spacing) * (1.0 - slide_progress))
-                    else:
-                        spacing = 80 + self.slack_notifications.notification_spacing
+                    spacing = 80 + self.slack_notifications.notification_spacing
                     messages_y_offset += spacing
                 messages_y_offset += 10  # Gap between systems
             
@@ -708,13 +770,9 @@ class Game:
             discord_y_offset = messages_y_offset
             messages_notification_count = len(self.messages_notifications.notifications)
             if messages_notification_count > 0:
-                # Calculate total height of Messages notifications
+                # Calculate total height of Messages notifications (horizontal slide doesn't affect vertical spacing)
                 for i, notif in enumerate(self.messages_notifications.notifications):
-                    if notif.is_dismissing:
-                        slide_progress = abs(notif.y_offset) / 100.0
-                        spacing = int((80 + self.messages_notifications.notification_spacing) * (1.0 - slide_progress))
-                    else:
-                        spacing = 80 + self.messages_notifications.notification_spacing
+                    spacing = 80 + self.messages_notifications.notification_spacing
                     discord_y_offset += spacing
                 discord_y_offset += 10  # Gap between systems
             
@@ -724,10 +782,7 @@ class Game:
             self.discord_notifications.render(self.screen)
             self.discord_notifications.start_y = original_discord_y
             
-            # Draw phone call popup and conversation (on top of everything)
-            self.phone_call_system.render(self.screen)
-            
-            # Draw phone call popup and conversation (on top of everything)
+            # Draw phone call popup (on top of everything)
             self.phone_call_system.render(self.screen)
             
             # Draw milestone notifications (on top)
@@ -754,5 +809,11 @@ class Game:
         sys.exit()
 
 if __name__ == "__main__":
-    game = Game()
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Menu Simulator Game')
+    parser.add_argument('--no_startup', action='store_true', 
+                       help='Skip start screen and startup animations for development')
+    args = parser.parse_args()
+    
+    game = Game(skip_startup=args.no_startup)
     game.run()

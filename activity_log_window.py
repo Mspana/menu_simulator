@@ -170,7 +170,7 @@ class ActivityLogWindow:
         
         # Draw progress text above bar (centered, red with black outline)
         progress_font = pygame.font.Font(None, 24)
-        progress_text = f"{progress:.1f}%"
+        progress_text = f"Conference Fundraising Progress: {progress:.1f}%"
         
         # Create text with outline
         text_surface = progress_font.render(progress_text, True, (255, 0, 0))  # Red text

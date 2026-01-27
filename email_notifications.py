@@ -19,7 +19,7 @@ class EmailNotification:
         self.is_dismissing = False
         self.dismiss_start_time = 0
         self.dismiss_duration = 0.3  # Slide out animation duration
-        self.y_offset = 0  # For sliding animation
+        self.x_offset = 0  # For sliding animation (slides right)
         self.is_congratulatory = is_congratulatory
         self.email_data = email_data  # Store email data for opening in Outlook
         self.rect = None  # Will be set during render for click detection
@@ -37,8 +37,8 @@ class EmailNotification:
         if self.is_dismissing:
             dismiss_elapsed = current_time - self.dismiss_start_time
             progress = min(dismiss_elapsed / self.dismiss_duration, 1.0)
-            # Slide up (negative offset)
-            self.y_offset = -progress * 100  # Slide up 100 pixels
+            # Slide right (positive offset)
+            self.x_offset = progress * 400  # Slide right 400 pixels
     
     def should_remove(self):
         """Check if notification should be removed"""
@@ -49,11 +49,11 @@ class EmailNotification:
     
     def render(self, screen, x, y, width):
         """Render the notification"""
-        # Calculate actual y position with offset
-        actual_y = y + int(self.y_offset)
+        # Calculate actual x position with offset
+        actual_x = x + int(self.x_offset)
         
         # Don't render if completely off screen
-        if actual_y < -100:
+        if actual_x > 1920:
             return
         
         # Notification dimensions
@@ -105,10 +105,10 @@ class EmailNotification:
         notification.blit(subject_text, (text_x, padding + 28))
         
         # Draw to screen
-        screen.blit(notification, (x, actual_y))
+        screen.blit(notification, (actual_x, y))
         
         # Store rect for click detection
-        self.rect = pygame.Rect(x, actual_y, width, height)
+        self.rect = pygame.Rect(actual_x, y, width, height)
     
     def contains_point(self, pos):
         """Check if point is within notification"""
@@ -216,18 +216,10 @@ class EmailNotificationSystem:
             # Calculate base position
             base_y = current_y
             
-            # If this notification is dismissing, it slides up
-            # Other notifications below it also need to account for the slide
-            render_y = base_y + int(notification.y_offset)
+            # If this notification is dismissing, it slides right
+            # Other notifications don't need to account for horizontal slide
+            notification.render(screen, self.start_x, base_y, self.notification_width)
             
-            notification.render(screen, self.start_x, render_y, self.notification_width)
-            
-            # Next notification position (account for dismissing notification's space)
-            if notification.is_dismissing:
-                # Dismissing notifications take less space as they slide up
-                slide_progress = abs(notification.y_offset) / 100.0
-                spacing = int((90 + self.notification_spacing) * (1.0 - slide_progress))
-            else:
-                spacing = 90 + self.notification_spacing
-            
+            # Next notification position (vertical stacking unaffected by horizontal slide)
+            spacing = 90 + self.notification_spacing
             current_y += spacing

@@ -17,6 +17,7 @@ class DiscordInterrupt:
         self.target_menu = None
         self.popup_rect = None
         self.close_button_rect = None
+        self.ignore_button_rect = None
         self.screen_width = 1920
         self.screen_height = 1080
         
@@ -115,6 +116,16 @@ class DiscordInterrupt:
             20, 20
         )
         
+        # Ignore button at bottom center of popup (big button)
+        ignore_button_width = 200
+        ignore_button_height = 50
+        self.ignore_button_rect = pygame.Rect(
+            popup_x + (self.popup_width - ignore_button_width) // 2,
+            popup_y + self.popup_height - ignore_button_height - 15,
+            ignore_button_width,
+            ignore_button_height
+        )
+        
         # Play Discord notification sound
         if sounds and 'discord' in sounds:
             sounds['discord'].play()
@@ -123,6 +134,11 @@ class DiscordInterrupt:
         """Handle click on Discord popup"""
         if not self.active:
             return False
+        
+        # Check if ignore button was clicked
+        if self.ignore_button_rect and self.ignore_button_rect.collidepoint(pos):
+            self._close_interruption(menus)
+            return True
         
         # Check if close button was clicked
         if self.close_button_rect and self.close_button_rect.collidepoint(pos):
@@ -145,6 +161,7 @@ class DiscordInterrupt:
         self.target_menu = None
         self.popup_rect = None
         self.close_button_rect = None
+        self.ignore_button_rect = None
     
     def is_active(self):
         """Check if an interruption is currently active"""
@@ -193,9 +210,9 @@ class DiscordInterrupt:
             text_rect = text_surface.get_rect(center=(self.popup_rect.centerx, start_y + i * 30))
             screen.blit(text_surface, text_rect)
         
-        # Draw "Calvelli" label (top left of popup)
+        # Draw "Message From: Calvelli" label (top left of popup)
         name_font = pygame.font.Font(None, 20)
-        name_text = name_font.render("Calvelli", True, (200, 200, 200))
+        name_text = name_font.render("Message From: Calvelli", True, (200, 200, 200))
         screen.blit(name_text, (self.popup_rect.x + 15, self.popup_rect.y + 10))
         
         # Draw close button (top right of popup)
@@ -204,3 +221,16 @@ class DiscordInterrupt:
             os.path.join(ui_path, "icon_close_x_20x20.png")
         ).convert_alpha()
         screen.blit(close_icon, self.close_button_rect.topleft)
+        
+        # Draw Ignore button (big button at bottom)
+        if self.ignore_button_rect:
+            # Button background (gray with hover effect)
+            button_color = (100, 100, 100)
+            pygame.draw.rect(screen, button_color, self.ignore_button_rect)
+            pygame.draw.rect(screen, (150, 150, 150), self.ignore_button_rect, 2)
+            
+            # Button text
+            button_font = pygame.font.Font(None, 32)
+            ignore_text = button_font.render("Ignore", True, (255, 255, 255))
+            text_rect = ignore_text.get_rect(center=self.ignore_button_rect.center)
+            screen.blit(ignore_text, text_rect)
