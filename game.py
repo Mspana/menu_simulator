@@ -659,6 +659,17 @@ class Game:
                 self._register_small_progress(event_msg)
             discord_window.sent_reply_events.clear()
         
+        # If progress has reached 100% and game is not yet marked complete, trigger ending
+        if not self.game_complete and self.game_state.progress >= 100.0:
+            self.game_complete = True
+            self.ending_screen = EndingScreen(
+                self.screen,
+                self.game_state,
+                self.assets_path
+            )
+            if 'celebration' in self.sounds:
+                self.sounds['celebration'].play()
+        
         # Update themed windows (e.g., Zomboid cycling, Outlook blinking)
         dt = self.clock.get_time()
         for menu in self.menus:

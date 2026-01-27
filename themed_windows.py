@@ -1120,6 +1120,9 @@ class SlackWindow(ThemedWindow):
         
         # Draw reply area
         reply_area_y = self.position[1] + self.height - 90
+        # Mouse state for click-feedback on buttons
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_buttons = pygame.mouse.get_pressed(num_buttons=3)
         
         if self.replying:
             # Draw reply options if none selected
@@ -1130,7 +1133,12 @@ class SlackWindow(ThemedWindow):
                 
                 for i, option in enumerate(self.reply_options):
                     option_rect = pygame.Rect(msg_x, reply_area_y - 130 + i * 35, 200, 30)
-                    pygame.draw.rect(screen, (240, 240, 240), option_rect)
+                    base_color = (240, 240, 240)
+                    if option_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                        draw_color = (220, 220, 220)
+                    else:
+                        draw_color = base_color
+                    pygame.draw.rect(screen, draw_color, option_rect)
                     pygame.draw.rect(screen, (200, 200, 200), option_rect, 1)
                     option_text = font_msg.render(option, True, (0, 0, 0))
                     text_rect = option_text.get_rect(center=option_rect.center)
@@ -1154,7 +1162,11 @@ class SlackWindow(ThemedWindow):
                 
                 # Draw send button (below the typing box)
                 send_button_rect = pygame.Rect(msg_x, reply_area_y - 5, 100, 40)
-                send_color = (0, 180, 0) if self.is_reply_complete else (150, 150, 150)
+                base_color = (0, 180, 0) if self.is_reply_complete else (150, 150, 150)
+                if send_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                    send_color = tuple(max(0, c - 30) for c in base_color)
+                else:
+                    send_color = base_color
                 pygame.draw.rect(screen, send_color, send_button_rect)
                 pygame.draw.rect(screen, (100, 100, 100), send_button_rect, 1)
                 font_button = pygame.font.Font(None, 16)
@@ -1168,7 +1180,12 @@ class SlackWindow(ThemedWindow):
                 # Button is below the typing box area (when replying) or below message area
                 reply_button_y = reply_area_y + 10
                 reply_button_rect = pygame.Rect(msg_x, reply_button_y, 100, 30)
-                pygame.draw.rect(screen, (74, 21, 75), reply_button_rect)  # Slack purple
+                base_color = (74, 21, 75)  # Slack purple
+                if reply_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                    draw_color = (60, 15, 65)
+                else:
+                    draw_color = base_color
+                pygame.draw.rect(screen, draw_color, reply_button_rect)
                 pygame.draw.rect(screen, (50, 10, 50), reply_button_rect, 2)  # Border
                 font_button = pygame.font.Font(None, 16)
                 reply_button_text = font_button.render("Reply", True, (255, 255, 255))

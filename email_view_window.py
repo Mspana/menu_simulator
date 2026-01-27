@@ -177,8 +177,15 @@ class EmailViewWindow(ThemedWindow):
                 30
             )
             
-            # Button background
-            pygame.draw.rect(screen, (0, 120, 212), reply_button_rect)
+            # Button background with simple click feedback (darker when pressed)
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_buttons = pygame.mouse.get_pressed(num_buttons=3)
+            if reply_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                bg_color = (0, 90, 170)
+            else:
+                bg_color = (0, 120, 212)
+            
+            pygame.draw.rect(screen, bg_color, reply_button_rect)
             pygame.draw.rect(screen, (0, 100, 180), reply_button_rect, 1)
             
             # Reply text

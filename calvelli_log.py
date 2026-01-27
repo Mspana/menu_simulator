@@ -66,8 +66,8 @@ class CalvelliLog:
         """Show a new random activity log"""
         self.current_log = random.choice(self.activities)
         self.log_start_time = current_time_ms
-        # Random progress increase between 5-15%
-        self.progress_increase = random.uniform(5.0, 15.0)
+        # Random progress increase between 5-12.5%
+        self.progress_increase = random.uniform(5.0, 12.5)
         self.progress_applied = False  # Track if we've applied the progress
         # Signal that a congratulatory email should be sent
         self.should_send_email = True

@@ -122,6 +122,8 @@ class ReplyWindow(ThemedWindow):
         y_offset += 30
         
         # Response options
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_buttons = pygame.mouse.get_pressed(num_buttons=3)
         for i, response in enumerate(self.all_responses):
             response_rect = pygame.Rect(
                 content_x + padding, 
@@ -130,12 +132,19 @@ class ReplyWindow(ThemedWindow):
                 40
             )
             
-            # Highlight selected response
+            # Base color: selected vs normal
             if i == self.selected_response_index:
-                pygame.draw.rect(screen, (220, 235, 255), response_rect)
+                base_color = (220, 235, 255)
             else:
-                pygame.draw.rect(screen, (250, 250, 250), response_rect)
+                base_color = (250, 250, 250)
             
+            # Click feedback: darken slightly when pressed
+            if response_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                draw_color = tuple(max(0, c - 20) for c in base_color)
+            else:
+                draw_color = base_color
+            
+            pygame.draw.rect(screen, draw_color, response_rect)
             pygame.draw.rect(screen, (200, 200, 200), response_rect, 1)
             
             # Response text
@@ -212,13 +221,20 @@ class ReplyWindow(ThemedWindow):
             35
         )
         
-        # Button color based on completion
+        # Button color based on completion, with click feedback
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_buttons = pygame.mouse.get_pressed(num_buttons=3)
         if self.is_complete:
-            button_color = (50, 200, 50)  # Green
+            base_color = (50, 200, 50)  # Green
             text_color = (255, 255, 255)
         else:
-            button_color = (200, 200, 200)  # Grey
+            base_color = (200, 200, 200)  # Grey
             text_color = (100, 100, 100)
+        
+        if send_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+            button_color = tuple(max(0, c - 30) for c in base_color)
+        else:
+            button_color = base_color
         
         pygame.draw.rect(screen, button_color, send_button_rect)
         pygame.draw.rect(screen, (150, 150, 150), send_button_rect, 1)
