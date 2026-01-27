@@ -33,7 +33,7 @@ class GameNotification:
             return
         
         # Store positions relative to window, not absolute screen positions
-        instruction_box_height = 35
+        instruction_box_height = 50  # Updated to match render height
         padding = 20
         content_y_offset = self.window.titlebar_height + padding + instruction_box_height + padding
         content_x_offset = padding
