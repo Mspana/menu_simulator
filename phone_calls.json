@@ -1,0 +1,80 @@
+{
+  "callers": [
+    {
+      "name": "Michael Miske",
+      "number": "(555) 123-4567"
+    },
+    {
+      "name": "Jar",
+      "number": "(555) 345-6789"
+    },
+    {
+      "name": "Halle",
+      "number": "(555) 456-7890"
+    },
+    {
+      "name": "Anne",
+      "number": "(555) 789-0123"
+    }
+  ],
+  "conversations": {
+    "Michael Miske": [
+      {"speaker": "caller", "text": "Hey Matt, you got a minute?"},
+      {"speaker": "player", "text": "Yeah, what's up?"},
+      {"speaker": "caller", "text": "Dude, people are SO bad at League of Legends. It's insane."},
+      {"speaker": "player", "text": "Oh, are you playing ranked?"},
+      {"speaker": "caller", "text": "Yeah and my teammates are absolute garbage. They don't know how to play at all."},
+      {"speaker": "player", "text": "That's rough, man."},
+      {"speaker": "caller", "text": "And then they keep making the same mistakes over and over. It's like they're not even trying."},
+      {"speaker": "player", "text": "Maybe take a break?"},
+      {"speaker": "caller", "text": "No way, I need to climb. But seriously, how do people get to this rank?"},
+      {"speaker": "player", "text": "I don't know, practice I guess?"},
+      {"speaker": "caller", "text": "Ugh, and Velli is terrible too. Like, why is he even playing?"},
+      {"speaker": "player", "text": "Wait, Velli plays League?"},
+      {"speaker": "caller", "text": "Yeah and he's awful. No idea what he's doing. Just feeds every game."},
+      {"speaker": "player", "text": "Okay, well good luck with your games."},
+      {"speaker": "caller", "text": "Thanks, I'll need it with these teammates."}
+    ],
+    "Jar": [
+      {"speaker": "caller", "text": "Matt! I need your help with something serious."},
+      {"speaker": "player", "text": "What's going on? Are you okay?"},
+      {"speaker": "caller", "text": "It's about Fleece. He's... he's dead."},
+      {"speaker": "player", "text": "What?! How? What happened?"},
+      {"speaker": "caller", "text": "We found him in his room. The scene is... disturbing."},
+      {"speaker": "player", "text": "Oh my god, that's terrible. Do they know what happened?"},
+      {"speaker": "caller", "text": "That's the thing. The evidence points to something weird."},
+      {"speaker": "player", "text": "What do you mean?"},
+      {"speaker": "caller", "text": "There's a trampoline in his room. And... well, the coroner says he bounced on it too hard."},
+      {"speaker": "player", "text": "He bounced on it too hard? That's how he died?"},
+      {"speaker": "caller", "text": "Yeah. Apparently he was bouncing and just... bounced too hard. It's a murder mystery now."},
+      {"speaker": "player", "text": "That's... that's really strange. I'm so sorry."},
+      {"speaker": "caller", "text": "Thanks. I just needed to tell someone. This is all so surreal."}
+    ],
+    "Halle": [
+      {"speaker": "caller", "text": "Hey Matt! I heard about the conference fundraising."},
+      {"speaker": "player", "text": "Oh yeah, it's going well!"},
+      {"speaker": "caller", "text": "Going well? Matt, you're doing AMAZING. Seriously impressive work."},
+      {"speaker": "player", "text": "Thanks! I've been putting in a lot of effort."},
+      {"speaker": "caller", "text": "I can tell. You're so good at this. Really, you're incredible."},
+      {"speaker": "player", "text": "Aw, that's really nice of you to say."},
+      {"speaker": "caller", "text": "I mean it. You're just... wow. So talented and dedicated."},
+      {"speaker": "player", "text": "Well, I appreciate that!"},
+      {"speaker": "caller", "text": "Maybe we could grab coffee sometime? I'd love to hear more about your work."},
+      {"speaker": "player", "text": "That sounds nice! I'll let you know when I'm free."},
+      {"speaker": "caller", "text": "Perfect! Can't wait. Keep up the amazing work!"}
+    ],
+    "Anne": [
+      {"speaker": "caller", "text": "Hi Matt! I just wanted to call and say congratulations."},
+      {"speaker": "player", "text": "Thanks! What for?"},
+      {"speaker": "caller", "text": "The fundraising! Everyone's talking about how well you're doing."},
+      {"speaker": "player", "text": "Oh, that's great to hear!"},
+      {"speaker": "caller", "text": "You're really something special, you know that? So organized and professional."},
+      {"speaker": "player", "text": "That's really kind of you!"},
+      {"speaker": "caller", "text": "I'm serious. You have this way of just... making things happen. It's really attractive."},
+      {"speaker": "player", "text": "Oh, well thank you!"},
+      {"speaker": "caller", "text": "I'd love to work with you more. You're just so good at what you do."},
+      {"speaker": "player", "text": "I'd like that too!"},
+      {"speaker": "caller", "text": "Great! Let's definitely make that happen. You're the best!"}
+    ]
+  }
+}

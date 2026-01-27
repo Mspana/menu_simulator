@@ -21,6 +21,9 @@ from email_notifications import EmailNotificationSystem
 from outlook_email_system import OutlookEmailSystem
 from slack_notifications import SlackNotificationSystem
 from messages_notifications import MessagesNotificationSystem
+from discord_notifications import DiscordNotificationSystem
+from game_notifications import GameNotificationSystem
+from phone_call import PhoneCallSystem
 
 # Initialize Pygame
 pygame.init()
@@ -60,6 +63,7 @@ class Game:
         self.game_notifications = GameNotificationSystem()
         self.milestone_notifications = MilestoneNotificationSystem(SCREEN_WIDTH)
         self.progress_popup_system = ProgressPopupSystem()
+        self.phone_call_system = PhoneCallSystem()
         
         # Menus list (will include dynamically created email windows)
         self.menus = []
@@ -224,7 +228,12 @@ class Game:
     
     def _handle_click(self, pos):
         """Handle mouse click"""
-        # Check Discord popup first
+        # Check phone call popup first (blocks everything)
+        if self.phone_call_system.active_call and self.phone_call_system.active_call.active:
+            if self.phone_call_system.handle_click(pos):
+                return
+        
+        # Check Discord popup
         if self.discord_interrupt.is_active():
             if self.discord_interrupt.handle_click(pos, self.menus):
                 return
@@ -259,39 +268,37 @@ class Game:
         # Check Slack notifications
         clicked_slack_data = self.slack_notifications.handle_click(pos)
         if clicked_slack_data:
-            # Add message to Slack window
+            # Bring Slack window to front and highlight the message
             slack_window = next((m for m in self.menus if isinstance(m, SlackWindow)), None)
             if slack_window:
-                slack_window.add_message(
-                    clicked_slack_data['channel'],
-                    clicked_slack_data['user'],
-                    clicked_slack_data['text']
-                )
+                # Bring to front
+                max_z = max([m.z_index for m in self.menus] + [self.activity_log_window.z_index], default=0)
+                slack_window.z_index = max_z + 1
+                # Message is already in the window (added when notification was created)
             return
         
         # Check Messages notifications
         clicked_messages_data = self.messages_notifications.handle_click(pos)
         if clicked_messages_data:
-            # Add message to Messages window
+            # Bring Messages window to front
             messages_window = next((m for m in self.menus if isinstance(m, MessagesWindow)), None)
             if messages_window:
-                messages_window.add_message(
-                    clicked_messages_data['contact'],
-                    clicked_messages_data['message']
-                )
+                # Bring to front
+                max_z = max([m.z_index for m in self.menus] + [self.activity_log_window.z_index], default=0)
+                messages_window.z_index = max_z + 1
+                # Message is already in the window (added when notification was created)
             return
         
         # Check Discord notifications
         clicked_discord_data = self.discord_notifications.handle_click(pos)
         if clicked_discord_data:
-            # Add message to Discord window
+            # Bring Discord window to front
             discord_window = next((m for m in self.menus if isinstance(m, DiscordWindow)), None)
             if discord_window:
-                discord_window.add_message(
-                    clicked_discord_data['channel'],
-                    clicked_discord_data['user'],
-                    clicked_discord_data['text']
-                )
+                # Bring to front
+                max_z = max([m.z_index for m in self.menus] + [self.activity_log_window.z_index], default=0)
+                discord_window.z_index = max_z + 1
+                # Message is already in the window (added when notification was created)
             return
         
         # Check activity log window
@@ -425,25 +432,38 @@ class Game:
                 self.progress_popup_system.check_progress_increase(self.game_state.progress, progress_bar_center)
                 
                 # Trigger Slack, Messages, or Discord notification (random choice)
+                # First add message to window, then create notification
                 import random
                 choice = random.random()
                 if choice < 0.33:
-                    # Add Slack notification
-                    channel = random.choice(self.slack_notifications.channels)
-                    user = random.choice(self.slack_notifications.users)
-                    message = random.choice(self.slack_notifications.message_templates)
-                    self.slack_notifications.add_notification(channel, user, message)
+                    # Add message to Slack window first
+                    slack_window = next((m for m in self.menus if isinstance(m, SlackWindow)), None)
+                    if slack_window:
+                        channel = random.choice(self.slack_notifications.channels)
+                        user = random.choice(self.slack_notifications.users)
+                        message = random.choice(self.slack_notifications.message_templates)
+                        slack_window.add_message(channel, user, message)
+                        # Then create notification
+                        self.slack_notifications.add_notification(channel, user, message)
                 elif choice < 0.66:
-                    # Add Messages notification
-                    contact = random.choice(self.messages_notifications.contacts)
-                    message = random.choice(self.messages_notifications.message_templates)
-                    self.messages_notifications.add_notification(contact, message)
+                    # Add message to Messages window first
+                    messages_window = next((m for m in self.menus if isinstance(m, MessagesWindow)), None)
+                    if messages_window:
+                        contact = random.choice(self.messages_notifications.contacts)
+                        message = random.choice(self.messages_notifications.message_templates)
+                        messages_window.add_message(contact, message)
+                        # Then create notification
+                        self.messages_notifications.add_notification(contact, message)
                 else:
-                    # Add Discord notification
-                    channel = random.choice(self.discord_notifications.channels)
-                    user = random.choice(self.discord_notifications.users)
-                    message = random.choice(self.discord_notifications.message_templates)
-                    self.discord_notifications.add_notification(channel, user, message)
+                    # Add message to Discord window first
+                    discord_window = next((m for m in self.menus if isinstance(m, DiscordWindow)), None)
+                    if discord_window:
+                        channel = random.choice(self.discord_notifications.channels)
+                        user = random.choice(self.discord_notifications.users)
+                        message = random.choice(self.discord_notifications.message_templates)
+                        discord_window.add_message(channel, user, message)
+                        # Then create notification
+                        self.discord_notifications.add_notification(channel, user, message)
                 
                 # Randomly trigger FTL or Zomboid notification
                 if random.random() < 0.3:  # 30% chance
@@ -456,6 +476,11 @@ class Game:
                         zomboid_window = next((m for m in self.menus if isinstance(m, ZomboidWindow)), None)
                         if zomboid_window:
                             self.game_notifications.trigger_notification("zomboid", zomboid_window)
+                
+                # Randomly trigger phone call (20% chance)
+                if random.random() < 0.2:  # 20% chance
+                    if not (self.phone_call_system.active_call and self.phone_call_system.active_call.active):
+                        self.phone_call_system.trigger_call()
         
         # Check if it's time to send a congratulatory email notification
         if self.calvelli_log.should_trigger_email(current_time_ms):
@@ -596,9 +621,18 @@ class Game:
             if self.ending_screen:
                 self.ending_screen.render()
         else:
-            # Draw menu windows
+            # Draw menu windows (including game notification overlays)
             for menu in sorted(self.menus, key=lambda m: m.z_index):
                 menu.render(self.screen)
+                # Draw game notification overlays on FTL/Zomboid windows
+                if isinstance(menu, FTLWindow):
+                    notification = self.game_notifications.active_notifications.get("ftl")
+                    if notification and notification.active:
+                        notification.render(self.screen)
+                elif isinstance(menu, ZomboidWindow):
+                    notification = self.game_notifications.active_notifications.get("zomboid")
+                    if notification and notification.active:
+                        notification.render(self.screen)
             
             # Draw activity log window (with progress bar inside) - render after menus so it can be on top
             self.activity_log_window.render(self.screen, self.game_state.progress)
@@ -667,8 +701,11 @@ class Game:
             self.discord_notifications.render(self.screen)
             self.discord_notifications.start_y = original_discord_y
             
-            # Draw game notifications (FTL/Zomboid)
-            self.game_notifications.render(self.screen)
+            # Draw phone call popup and conversation (on top of everything)
+            self.phone_call_system.render(self.screen)
+            
+            # Draw phone call popup and conversation (on top of everything)
+            self.phone_call_system.render(self.screen)
             
             # Draw milestone notifications (on top)
             self.milestone_notifications.render(self.screen)
