@@ -129,6 +129,14 @@ class MenuWindow:
         if self.is_blocked:
             return False
         
+        # Check if click is anywhere within window bounds first
+        window_rect = pygame.Rect(self.position[0], self.position[1], self.width, self.height)
+        if not window_rect.collidepoint(pos):
+            return False
+        
+        # Click is within window - bring to front will be handled by game.py
+        # But we still need to handle specific interactions
+        
         # Check close button
         if self.close_button_rect.collidepoint(pos):
             # Don't actually close, just return True to indicate click was handled
@@ -138,6 +146,9 @@ class MenuWindow:
         if self.minimize_button_rect.collidepoint(pos):
             # Could implement minimize here
             return True
+        
+        # Click is within window - bring to front will be handled by game.py
+        # But we still need to handle specific interactions
         
         # Check titlebar for dragging
         if self.titlebar_rect.collidepoint(pos):
@@ -154,7 +165,8 @@ class MenuWindow:
             if item.handle_click(window_relative_pos):
                 return True
         
-        # Check if click is within window bounds
+        # Click was within window but not on any specific element - still bring to front
+        return True
         window_rect = pygame.Rect(self.position[0], self.position[1], self.width, self.height)
         return window_rect.collidepoint(pos)
     

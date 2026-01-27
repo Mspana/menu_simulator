@@ -62,9 +62,9 @@ class ActivityLogWindow:
             self.titlebar_height
         )
         
-        # Window background
+        # Window background - different color (dark blue-gray)
         self.background_surface = pygame.Surface((self.width, self.height))
-        self.background_surface.fill((250, 250, 250))
+        self.background_surface.fill((40, 50, 70))
         
         # Progress bar assets
         self.progress_bar_frame = None
@@ -93,11 +93,11 @@ class ActivityLogWindow:
             self.progress_bar_fill = pygame.Surface((bar_width, 30))
             self.progress_bar_fill.fill((0, 120, 212))
     
-    def add_activity(self, message):
+    def add_activity(self, message, progress_increase=None):
         """Add a new activity to the log"""
         import time
         timestamp = time.time()
-        self.activities.append((message, timestamp))
+        self.activities.append((message, timestamp, progress_increase))
         # Keep only the most recent activities
         if len(self.activities) > self.max_activities:
             self.activities.pop(0)
@@ -192,23 +192,43 @@ class ActivityLogWindow:
         log_font = pygame.font.Font(None, 18)
         log_area_height = self.height - self.titlebar_height - 120  # Leave space for progress bar
         
-        # Draw activities (most recent at top)
+        # Draw activities (most recent at top) - larger cards
         y_offset = log_start_y
-        for i, (message, timestamp) in enumerate(reversed(self.activities)):
+        card_height = 40  # Larger cards
+        for i, activity_data in enumerate(reversed(self.activities)):
             if y_offset > self.position[1] + self.height - 20:
                 break  # Don't draw outside window
             
-            # Alternate background for readability
+            # Unpack activity data (handle both old format and new format)
+            if len(activity_data) == 3:
+                message, timestamp, progress_increase = activity_data
+            else:
+                message, timestamp = activity_data
+                progress_increase = None
+            
+            # Alternate background for readability (larger cards)
             if i % 2 == 0:
-                pygame.draw.rect(screen, (245, 245, 245),
+                pygame.draw.rect(screen, (50, 60, 80),
                                pygame.Rect(self.position[0] + 10, y_offset - 2, 
-                                         self.width - 20, 22))
+                                         self.width - 20, card_height))
+            else:
+                pygame.draw.rect(screen, (45, 55, 75),
+                               pygame.Rect(self.position[0] + 10, y_offset - 2, 
+                                         self.width - 20, card_height))
             
-            # Draw activity text
-            text_surface = log_font.render(message, True, (0, 0, 0))
-            screen.blit(text_surface, (self.position[0] + 15, y_offset))
+            # Draw activity text (larger font)
+            activity_font = pygame.font.Font(None, 22)
+            text_surface = activity_font.render(message, True, (255, 255, 255))
+            screen.blit(text_surface, (self.position[0] + 15, y_offset + 5))
             
-            y_offset += 22
+            # Draw progress increase if available
+            if progress_increase is not None and progress_increase > 0:
+                increase_font = pygame.font.Font(None, 20)
+                increase_text = increase_font.render(f"+{progress_increase:.1f}%", True, (100, 255, 100))
+                text_rect = increase_text.get_rect()
+                screen.blit(increase_text, (self.position[0] + self.width - 15 - text_rect.width, y_offset + 15))
+            
+            y_offset += card_height + 2
         
         # Draw border
         pygame.draw.rect(screen, (180, 180, 180), 

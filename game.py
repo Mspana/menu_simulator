@@ -10,6 +10,8 @@ from themed_windows import (FTLWindow, ZomboidWindow, InventoryWindow,
                            OutlookWindow, MessagesWindow, SlackWindow)
 from email_view_window import EmailViewWindow
 from reply_window import ReplyWindow
+from milestone_notifications import MilestoneNotificationSystem
+from progress_popup import ProgressPopupSystem
 from discord_interrupt import DiscordInterrupt
 from game_state import GameState
 from ending import EndingScreen
@@ -50,14 +52,16 @@ class Game:
         self.discord_interrupt = DiscordInterrupt(self.assets_path)
         self.calvelli_log = CalvelliLog()
         self.email_notifications = EmailNotificationSystem()
+        self.milestone_notifications = MilestoneNotificationSystem(SCREEN_WIDTH)
+        self.progress_popup_system = ProgressPopupSystem()
         
         # Menus list (will include dynamically created email windows)
         self.menus = []
         
-        # Create activity log window (tall, narrow window on the right)
+        # Create activity log window (tall, narrow window on the left)
         log_window_width = 350
         log_window_height = SCREEN_HEIGHT - 100
-        log_window_x = SCREEN_WIDTH - log_window_width - 20
+        log_window_x = 20
         log_window_y = 50
         self.activity_log_window = ActivityLogWindow(
             position=(log_window_x, log_window_y),
@@ -69,6 +73,9 @@ class Game:
         
         # Create menu windows
         self.menus = self._create_menus()
+        
+        # Track email view windows separately for cleanup
+        self.email_view_windows = []
         
         # Set up Outlook email system
         outlook_window = next((m for m in self.menus if isinstance(m, OutlookWindow)), None)
@@ -136,6 +143,12 @@ class Game:
                 z_index=i
             )
             menus.append(menu)
+        
+        # Bring Outlook to front (highest z-index)
+        outlook_window = next((m for m in menus if isinstance(m, OutlookWindow)), None)
+        if outlook_window:
+            max_z = max(m.z_index for m in menus)
+            outlook_window.z_index = max_z + 1
         
         return menus
     
@@ -252,6 +265,24 @@ class Game:
                                     email['replied'] = True
                                     email['reply_text'] = menu.sent_reply
                                     break
+                        
+                        # Add activity log entry for responding to email
+                        self.activity_log_window.add_activity("You responded to an email", 0.1)
+                        # Increase progress by 0.1%
+                        self.game_state.increase_progress(0.1)
+                        # Create progress popup
+                        progress_bar_center = (
+                            self.activity_log_window.position[0] + self.activity_log_window.width // 2,
+                            self.activity_log_window.position[1] + self.activity_log_window.titlebar_height + 35
+                        )
+                        import time
+                        self.progress_popup_system.check_progress_increase(self.game_state.progress, progress_bar_center)
+                    
+                    # Also close the email view window if it's open
+                    email_view_window = next((w for w in self.menus if isinstance(w, EmailViewWindow) and 
+                                            w.email_data.get('subject') == menu.email_data.get('subject')), None)
+                    if email_view_window:
+                        email_view_window.should_close = True
                     
                     if menu in self.menus:
                         self.menus.remove(menu)
@@ -311,10 +342,19 @@ class Game:
         # Check if log triggered a progress increase and add to activity log
         progress_increase = self.calvelli_log.get_progress_increase()
         if progress_increase > 0:
+            old_progress = self.game_state.progress
             self.game_state.increase_progress(progress_increase)
-            # Add activity to log window
+            # Add activity to log window with progress increase
             if self.calvelli_log.current_log:
-                self.activity_log_window.add_activity(self.calvelli_log.current_log)
+                self.activity_log_window.add_activity(self.calvelli_log.current_log, progress_increase)
+                # Create progress popup animation
+                progress_bar_center = (
+                    self.activity_log_window.position[0] + self.activity_log_window.width // 2,
+                    self.activity_log_window.position[1] + self.activity_log_window.titlebar_height + 35
+                )
+                import time
+                current_time = time.time()
+                self.progress_popup_system.check_progress_increase(self.game_state.progress, progress_bar_center)
         
         # Check if it's time to send a congratulatory email notification
         if self.calvelli_log.should_trigger_email(current_time_ms):
@@ -322,6 +362,15 @@ class Game:
         
         # Update email notifications
         self.email_notifications.update()
+        
+        # Check for milestone notifications
+        import time
+        current_time = time.time()
+        self.milestone_notifications.check_milestones(self.game_state.progress)
+        self.milestone_notifications.update(current_time)
+        
+        # Update progress popup system
+        self.progress_popup_system.update(current_time)
         
         # Update Outlook email system
         if self.outlook_email_system:
@@ -336,6 +385,15 @@ class Game:
         # Clean up closed email/reply view windows
         windows_to_remove = [w for w in self.email_view_windows if hasattr(w, 'should_close') and w.should_close]
         for window in windows_to_remove:
+            if window in self.menus:
+                self.menus.remove(window)
+            if window in self.email_view_windows:
+                self.email_view_windows.remove(window)
+        
+        # Also check all menus for EmailViewWindows that should close
+        email_windows_to_remove = [w for w in self.menus if isinstance(w, EmailViewWindow) and 
+                                   hasattr(w, 'should_close') and w.should_close]
+        for window in email_windows_to_remove:
             if window in self.menus:
                 self.menus.remove(window)
             if window in self.email_view_windows:
@@ -433,6 +491,12 @@ class Game:
             
             # Draw email notifications (top right)
             self.email_notifications.render(self.screen)
+            
+            # Draw milestone notifications (on top)
+            self.milestone_notifications.render(self.screen)
+            
+            # Draw progress popups (on top of activity log window)
+            self.progress_popup_system.render(self.screen)
             
             # Draw Discord interruption if active (on top of everything)
             if self.discord_interrupt.is_active():

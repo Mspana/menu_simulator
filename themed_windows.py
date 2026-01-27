@@ -88,6 +88,14 @@ class ThemedWindow:
         if self.is_blocked:
             return False
         
+        # Check if click is anywhere within window bounds
+        window_rect = pygame.Rect(self.position[0], self.position[1], self.width, self.height)
+        if not window_rect.collidepoint(pos):
+            return False
+        
+        # Click is within window - bring to front will be handled by game.py
+        # But we still need to handle specific interactions
+        
         if self.close_button_rect.collidepoint(pos) or self.minimize_button_rect.collidepoint(pos):
             return True
         
@@ -96,7 +104,9 @@ class ThemedWindow:
             self.drag_offset = (pos[0] - self.position[0], pos[1] - self.position[1])
             return True
         
-        return self._handle_content_click(pos)
+        # Handle content clicks, but still return True to bring window to front
+        self._handle_content_click(pos)
+        return True
     
     def _handle_content_click(self, pos):
         """Override in subclasses for content-specific clicks"""
@@ -264,37 +274,48 @@ class OutlookWindow(ThemedWindow):
         from messages_content import (
             REGULAR_EMAIL_SENDERS, 
             REGULAR_EMAIL_SUBJECTS,
-            CONGRATULATORY_EMAILS
+            CONGRATULATORY_EMAILS,
+            REGULAR_EMAILS
         )
         
         self.email_senders = REGULAR_EMAIL_SENDERS
         self.email_subjects = REGULAR_EMAIL_SUBJECTS
+        self.regular_emails = REGULAR_EMAILS
         self.congratulatory_emails = CONGRATULATORY_EMAILS
         self.congratulatory_sent = set()  # Track which congratulatory emails have been sent
         
-        # Add some initial emails
-        current_time = time.time()
-        for i in range(5):
-            self._add_email(current_time - (5-i) * 3600)  # Spread over 5 hours
+        # Start with empty inbox (no initial emails)
     
     def _add_email(self, timestamp):
         """Add a new regular email to the inbox"""
         from datetime import datetime
+        from messages_content import REGULAR_EMAILS
         
-        sender = random.choice(self.email_senders)
-        subject = random.choice(self.email_subjects)
+        # Pick a random email template from the loaded emails
+        if REGULAR_EMAILS:
+            email_template = random.choice(REGULAR_EMAILS)
+        else:
+            # Fallback if no emails loaded
+            email_template = {
+                "sender": random.choice(self.email_senders),
+                "subject": random.choice(self.email_subjects),
+                "message": "Email content not available.",
+                "responses": ["OK", "Thanks", "Got it"]
+            }
         
         # Format time
         dt = datetime.fromtimestamp(timestamp)
         time_str = dt.strftime("%I:%M %p")
         
         email = {
-            "subject": subject,
-            "from": sender,
+            "subject": email_template["subject"],
+            "from": email_template["sender"],
             "time": time_str,
             "timestamp": timestamp,
             "read": False,
-            "type": "regular"
+            "type": "regular",
+            "message": email_template.get("message", ""),
+            "responses": email_template.get("responses", [])
         }
         
         # Add to beginning (newest first)

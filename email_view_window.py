@@ -168,8 +168,8 @@ class EmailViewWindow(ThemedWindow):
             
             y_offset += len(reply_lines) * 22 + 10
         
-        # Reply button (for congratulatory emails)
-        if 'responses' in self.email_data:
+        # Reply button (for emails with responses)
+        if 'responses' in self.email_data and len(self.email_data['responses']) > 0:
             reply_button_rect = pygame.Rect(
                 content_x + self.width - padding - 100,
                 content_y + padding,

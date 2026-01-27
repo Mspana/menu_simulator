@@ -1,0 +1,306 @@
+{
+  "regular_emails": [
+    {
+      "sender": "conference@org.com",
+      "subject": "Conference Planning Update",
+      "message": "Hi Matt, just wanted to give you a quick update on the conference planning. Everything is progressing smoothly. We've confirmed the main speakers and the venue is locked in. Let me know if you have any questions.",
+      "responses": [
+        "Thanks for the update!",
+        "Sounds good, keep me posted.",
+        "Appreciate the information."
+      ]
+    },
+    {
+      "sender": "sponsors@conference.org",
+      "subject": "Budget Review Needed",
+      "message": "Matt, we need to review the budget for the upcoming quarter. Can you take a look at the attached spreadsheet and let me know your thoughts? We're particularly concerned about the catering costs.",
+      "responses": [
+        "I'll review it this week.",
+        "Thanks, I'll check it out.",
+        "Will do, thanks for sending."
+      ]
+    },
+    {
+      "sender": "finance@conference.org",
+      "subject": "Sponsor Meeting Tomorrow",
+      "message": "Hi Matt, just a reminder that we have a sponsor meeting scheduled for tomorrow at 2 PM. Please prepare the presentation slides and bring the updated sponsorship packages. Looking forward to it!",
+      "responses": [
+        "Got it, see you tomorrow.",
+        "Will be there, thanks!",
+        "Thanks for the reminder."
+      ]
+    },
+    {
+      "sender": "venue@conference.org",
+      "subject": "Re: Fundraising Progress",
+      "message": "Matt, great news! The fundraising is going really well. We've already reached 75% of our goal. Keep up the excellent work!",
+      "responses": [
+        "That's fantastic!",
+        "Great to hear!",
+        "Thanks for letting me know."
+      ]
+    },
+    {
+      "sender": "media@conference.org",
+      "subject": "Venue Confirmation",
+      "message": "Hi Matt, I'm writing to confirm that the venue booking is finalized. All the details are in place and we're ready to go. The space looks great!",
+      "responses": [
+        "Perfect, thanks!",
+        "Great news!",
+        "Thanks for confirming."
+      ]
+    },
+    {
+      "sender": "volunteers@conference.org",
+      "subject": "Media Partnership Opportunity",
+      "message": "Matt, we have an exciting media partnership opportunity. A major tech blog wants to cover the conference. Should we proceed with this?",
+      "responses": [
+        "Yes, let's do it!",
+        "Sounds great!",
+        "I'll think about it."
+      ]
+    },
+    {
+      "sender": "michael miske <michael.miske@conference.org>",
+      "subject": "Volunteer Schedule",
+      "message": "Hey Matt, I've put together the volunteer schedule for the conference. Can you review it and let me know if there are any changes needed?",
+      "responses": [
+        "I'll review it today.",
+        "Thanks, looks good!",
+        "Will check it out."
+      ]
+    },
+    {
+      "sender": "seong-ah@conference.org",
+      "subject": "Registration Update",
+      "message": "Hi Matt, registration numbers are looking strong! We're ahead of schedule. Just wanted to share the good news.",
+      "responses": [
+        "That's awesome!",
+        "Great news!",
+        "Thanks for the update!"
+      ]
+    },
+    {
+      "sender": "jar@conference.org",
+      "subject": "Catering Menu Finalized",
+      "message": "Matt, the catering menu has been finalized. We've included vegetarian and vegan options as requested. Everything looks delicious!",
+      "responses": [
+        "Perfect, thanks!",
+        "Sounds great!",
+        "Thanks for handling that."
+      ]
+    },
+    {
+      "sender": "halle@conference.org",
+      "subject": "AV Equipment Confirmed",
+      "message": "Hi Matt, just confirming that all AV equipment has been booked and will be set up the day before the conference. Everything is ready to go!",
+      "responses": [
+        "Excellent!",
+        "Thanks for confirming.",
+        "Great, thanks!"
+      ]
+    },
+    {
+      "sender": "conference@org.com",
+      "subject": "Parking Arrangements",
+      "message": "Matt, parking arrangements have been finalized. We have 200 spots reserved for attendees. The parking map is attached.",
+      "responses": [
+        "Thanks!",
+        "Perfect, thanks.",
+        "Appreciate it!"
+      ]
+    },
+    {
+      "sender": "sponsors@conference.org",
+      "subject": "Schedule Changes",
+      "message": "Hi Matt, there have been some minor schedule changes. The keynote speaker session has been moved to 3 PM instead of 2 PM. Please update your calendar.",
+      "responses": [
+        "Got it, thanks.",
+        "Will do, thanks!",
+        "Thanks for letting me know."
+      ]
+    },
+    {
+      "sender": "finance@conference.org",
+      "subject": "Quick Question",
+      "message": "Matt, quick question - do you know if we need to order extra chairs for the breakout sessions? Let me know when you get a chance.",
+      "responses": [
+        "I'll check on that.",
+        "Let me get back to you.",
+        "I'll look into it."
+      ]
+    },
+    {
+      "sender": "venue@conference.org",
+      "subject": "Follow-up Required",
+      "message": "Hi Matt, just following up on the venue contract. We need your signature on the final version. Can you review and sign when you have a moment?",
+      "responses": [
+        "I'll review it today.",
+        "Will do, thanks.",
+        "I'll take care of it."
+      ]
+    },
+    {
+      "sender": "media@conference.org",
+      "subject": "Action Items",
+      "message": "Matt, here are the action items from our last meeting: 1) Finalize speaker bios 2) Update website with schedule 3) Send reminder emails. Can you handle these?",
+      "responses": [
+        "I'll get on it.",
+        "Will do!",
+        "On it, thanks."
+      ]
+    }
+  ],
+  "congratulatory_emails": [
+    {
+      "sender": "michael miske <michael.miske@conference.org>",
+      "subject": "You're doing amazing work!",
+      "message": "Hey Matt, just wanted to say that you've been absolutely crushing it with the conference planning. The venue booking was handled perfectly, and the sponsor outreach has been incredible. Really impressive work!",
+      "responses": [
+        "Thanks! I've been working hard on it.",
+        "I appreciate the recognition!",
+        "I'm glad everything is going well!"
+      ]
+    },
+    {
+      "sender": "sponsors@conference.org",
+      "subject": "Re: Amazing fundraising progress",
+      "message": "Matt, we've been so impressed with how quickly things are moving. Your work on securing sponsorships has been outstanding. The conference is really coming together thanks to your efforts!",
+      "responses": [
+        "Thank you! I've been putting in a lot of effort.",
+        "I'm glad the sponsorships are working out!",
+        "Thanks, I've been working hard on this."
+      ]
+    },
+    {
+      "sender": "venue@conference.org",
+      "subject": "Venue coordination going smoothly",
+      "message": "Hi Matt, just wanted to update you that everything with the venue is set. You've been incredibly organized and responsive. It's been a pleasure working with you on this!",
+      "responses": [
+        "Great! I made sure to stay on top of everything.",
+        "Thanks, I've been keeping everything organized.",
+        "I'm glad the coordination went smoothly!"
+      ]
+    },
+    {
+      "sender": "media@conference.org",
+      "subject": "Media partnerships secured",
+      "message": "Matt, you reached out to us and we're thrilled to partner on the conference. Your professionalism and attention to detail really stood out. Great work!",
+      "responses": [
+        "Thank you! I worked hard to make this happen.",
+        "I'm excited we could partner together!",
+        "Thanks, I made sure to be thorough."
+      ]
+    },
+    {
+      "sender": "finance@conference.org",
+      "subject": "Budget looking great",
+      "message": "Hey Matt, the budget spreadsheet you put together is excellent. Everything is well-organized and we're on track. You've really thought of everything!",
+      "responses": [
+        "Thanks! I spent a lot of time on that spreadsheet.",
+        "I'm glad the budget is working out!",
+        "I made sure to cover all the details."
+      ]
+    },
+    {
+      "sender": "volunteers@conference.org",
+      "subject": "Volunteer coordination",
+      "message": "Matt, you've done an amazing job coordinating all the volunteers. The schedule is clear, assignments are well-organized, and everyone knows what they're doing. Really impressive work!",
+      "responses": [
+        "Thanks! I organized everything carefully.",
+        "I'm glad the volunteers are all set!",
+        "I worked hard to make sure everyone was coordinated."
+      ]
+    },
+    {
+      "sender": "seong-ah@conference.org",
+      "subject": "You're a rockstar!",
+      "message": "Hey Matt! Just wanted to say that you've been doing incredible work. The conference planning is going so smoothly because of you. You should be proud!",
+      "responses": [
+        "Thanks! I've been putting in a lot of effort.",
+        "I appreciate that! I'm working hard.",
+        "Thanks for the kind words!"
+      ]
+    },
+    {
+      "sender": "jar@conference.org",
+      "subject": "Conference coming together nicely",
+      "message": "Matt, everything is looking great. Your attention to detail on the catering and AV equipment has been spot-on. The conference is going to be fantastic!",
+      "responses": [
+        "Thanks! I made sure to handle all the details.",
+        "I'm glad everything is working out!",
+        "I've been very thorough with the planning."
+      ]
+    },
+    {
+      "sender": "halle@conference.org",
+      "subject": "Schedule looks perfect",
+      "message": "Hi Matt, the schedule you put together is really well thought out. All the breakout sessions are properly coordinated. You've done an excellent job!",
+      "responses": [
+        "Thank you! I spent a lot of time on the schedule.",
+        "I'm glad the schedule works well!",
+        "Thanks, I organized it carefully."
+      ]
+    },
+    {
+      "sender": "conference@org.com",
+      "subject": "Outstanding progress",
+      "message": "Matt, I just wanted to reach out and congratulate you on the outstanding progress with the conference. Everything you've handled has been top-notch. Keep up the great work!",
+      "responses": [
+        "Thanks! I've been working really hard.",
+        "I appreciate the recognition!",
+        "I'm glad everything is going well!"
+      ]
+    },
+    {
+      "sender": "sponsors@conference.org",
+      "subject": "Fundraising success",
+      "message": "Hi Matt, the fundraising has been incredibly successful thanks to your efforts. We've exceeded our goals and it's all because of your hard work. Amazing job!",
+      "responses": [
+        "Thanks! I put a lot of effort into the fundraising.",
+        "I'm glad we exceeded the goals!",
+        "I worked hard to make this happen."
+      ]
+    },
+    {
+      "sender": "venue@conference.org",
+      "subject": "Everything is perfect",
+      "message": "Matt, I wanted to let you know that everything with the venue is perfect. Your coordination and communication have been excellent throughout. Thank you!",
+      "responses": [
+        "Thanks! I made sure to stay on top of everything.",
+        "I'm glad the venue coordination went well!",
+        "I worked hard to keep everything organized."
+      ]
+    },
+    {
+      "sender": "media@conference.org",
+      "subject": "Media coverage secured",
+      "message": "Hey Matt, great news! Thanks to your outreach, we've secured media coverage from several major outlets. Your networking skills are impressive!",
+      "responses": [
+        "Thanks! I reached out to a lot of contacts.",
+        "I'm glad the media coverage worked out!",
+        "I put a lot of effort into the networking."
+      ]
+    },
+    {
+      "sender": "finance@conference.org",
+      "subject": "Budget approved",
+      "message": "Matt, the budget you prepared has been approved without any changes. Your thoroughness and attention to detail really paid off. Excellent work!",
+      "responses": [
+        "Thanks! I spent a lot of time on that budget.",
+        "I'm glad the budget was approved!",
+        "I made sure to be thorough with all the details."
+      ]
+    },
+    {
+      "sender": "volunteers@conference.org",
+      "subject": "Volunteers are ready",
+      "message": "Hi Matt, all the volunteers are ready and excited thanks to your excellent coordination. The schedule you created is perfect and everyone knows their roles. Great job!",
+      "responses": [
+        "Thanks! I organized everything carefully.",
+        "I'm glad the volunteers are all set!",
+        "I worked hard to coordinate everyone."
+      ]
+    }
+  ]
+}

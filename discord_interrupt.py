@@ -22,6 +22,8 @@ class DiscordInterrupt:
         
         # Generate Discord-style popup background programmatically
         self.popup_image = self._generate_popup_background()
+        self.popup_width = 500
+        self.popup_height = 200
         
         # Message variations
         self.messages = [
@@ -44,16 +46,18 @@ class DiscordInterrupt:
     
     def _generate_popup_background(self):
         """Generate a Discord-style popup background"""
-        # Create surface for fullscreen popup
-        bg = pygame.Surface((self.screen_width, self.screen_height))
+        # Create surface for smaller popup (not fullscreen)
+        popup_width = 500
+        popup_height = 200
+        bg = pygame.Surface((popup_width, popup_height))
         
         # Discord dark theme background (#36393F or similar)
         bg.fill((54, 57, 63))
         
         # Add some subtle texture/noise
-        for _ in range(5000):
-            x = random.randint(0, self.screen_width - 1)
-            y = random.randint(0, self.screen_height - 1)
+        for _ in range(1000):
+            x = random.randint(0, popup_width - 1)
+            y = random.randint(0, popup_height - 1)
             # Subtle noise
             noise = random.randint(-5, 5)
             current = bg.get_at((x, y))
@@ -99,13 +103,15 @@ class DiscordInterrupt:
         for menu in menus:
             menu.is_blocked = True
         
-        # Fullscreen popup
-        self.popup_rect = pygame.Rect(0, 0, self.screen_width, self.screen_height)
+        # Smaller popup centered on screen
+        popup_x = (self.screen_width - self.popup_width) // 2
+        popup_y = (self.screen_height - self.popup_height) // 2
+        self.popup_rect = pygame.Rect(popup_x, popup_y, self.popup_width, self.popup_height)
         
-        # Close button in top right of screen
+        # Close button in top right of popup
         self.close_button_rect = pygame.Rect(
-            self.screen_width - 40,
-            20,
+            popup_x + self.popup_width - 30,
+            popup_y + 10,
             20, 20
         )
         
@@ -145,26 +151,29 @@ class DiscordInterrupt:
         return self.active
     
     def render(self, screen):
-        """Render the Discord popup (fullscreen)"""
+        """Render the Discord popup (smaller window)"""
         if not self.active or not self.popup_rect:
             return
         
-        # Draw fullscreen popup background
-        screen.blit(self.popup_image, (0, 0))
-        
-        # Draw semi-transparent overlay for better text visibility
+        # Draw semi-transparent overlay for the whole screen (dims background)
         overlay = pygame.Surface((self.screen_width, self.screen_height))
-        overlay.set_alpha(100)  # Less opaque since background is already dark
+        overlay.set_alpha(150)
         overlay.fill((0, 0, 0))
         screen.blit(overlay, (0, 0))
         
-        # Draw message text (centered, larger for fullscreen)
-        font = pygame.font.Font(None, 48)
+        # Draw popup background
+        screen.blit(self.popup_image, self.popup_rect.topleft)
+        
+        # Draw border around popup
+        pygame.draw.rect(screen, (100, 100, 100), self.popup_rect, 2)
+        
+        # Draw message text (centered in popup)
+        font = pygame.font.Font(None, 24)
         # Wrap text if needed
         words = self.current_message.split(' ')
         lines = []
         current_line = ""
-        max_width = self.screen_width - 200  # Margins
+        max_width = self.popup_width - 40  # Margins
         for word in words:
             test_line = current_line + word + " " if current_line else word + " "
             if font.size(test_line)[0] < max_width:
@@ -176,35 +185,22 @@ class DiscordInterrupt:
         if current_line:
             lines.append(current_line.strip())
         
-        # Draw lines (centered vertically)
-        total_height = len(lines) * 60
-        start_y = (self.screen_height - total_height) // 2
+        # Draw lines (centered in popup)
+        total_height = len(lines) * 30
+        start_y = self.popup_rect.y + (self.popup_height - total_height) // 2
         for i, line in enumerate(lines):
             text_surface = font.render(line, True, (255, 255, 255))
-            text_rect = text_surface.get_rect(center=(self.screen_width // 2, start_y + i * 60))
+            text_rect = text_surface.get_rect(center=(self.popup_rect.centerx, start_y + i * 30))
             screen.blit(text_surface, text_rect)
         
-        # Draw "Calvelli" label (top left, larger)
-        name_font = pygame.font.Font(None, 36)
+        # Draw "Calvelli" label (top left of popup)
+        name_font = pygame.font.Font(None, 20)
         name_text = name_font.render("Calvelli", True, (200, 200, 200))
-        screen.blit(name_text, (50, 50))
+        screen.blit(name_text, (self.popup_rect.x + 15, self.popup_rect.y + 10))
         
-        # Draw close button (top right, larger)
+        # Draw close button (top right of popup)
         ui_path = os.path.join(self.assets_path, "ui")
         close_icon = pygame.image.load(
             os.path.join(ui_path, "icon_close_x_20x20.png")
         ).convert_alpha()
-        # Scale close button for better visibility
-        close_icon = pygame.transform.scale(close_icon, (40, 40))
-        self.close_button_rect = pygame.Rect(
-            self.screen_width - 60,
-            20,
-            40, 40
-        )
         screen.blit(close_icon, self.close_button_rect.topleft)
-        
-        # Draw instruction text
-        instruction_font = pygame.font.Font(None, 32)
-        instruction_text = instruction_font.render("Click the X to close", True, (150, 150, 150))
-        instruction_rect = instruction_text.get_rect(center=(self.screen_width // 2, self.screen_height - 100))
-        screen.blit(instruction_text, instruction_rect)

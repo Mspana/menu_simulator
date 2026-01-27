@@ -83,26 +83,26 @@ class EmailNotification:
         pygame.draw.rect(notification, icon_color, 
                         pygame.Rect(icon_x, icon_y, icon_size, icon_size), 2)
         
-        # Draw sender and subject
-        font_sender = pygame.font.Font(None, 18)
-        font_subject = pygame.font.Font(None, 16)
+        # Draw "Incoming Mail" text (clear and simple)
+        font_title = pygame.font.Font(None, 24)
+        font_subtitle = pygame.font.Font(None, 18)
         
         text_x = icon_x + icon_size + padding
         
-        # Sender (bold-ish)
-        sender_text = font_sender.render(self.sender, True, (0, 0, 0))
-        notification.blit(sender_text, (text_x, padding))
+        # "Incoming Mail" title
+        title_text = font_title.render("Incoming Mail", True, (0, 0, 0))
+        notification.blit(title_text, (text_x, padding))
         
         # Subject (truncate if too long)
         max_subject_width = width - text_x - padding
         subject_display = self.subject
-        if font_subject.size(subject_display)[0] > max_subject_width:
-            while font_subject.size(subject_display + "...")[0] > max_subject_width and len(subject_display) > 0:
+        if font_subtitle.size(subject_display)[0] > max_subject_width:
+            while font_subtitle.size(subject_display + "...")[0] > max_subject_width and len(subject_display) > 0:
                 subject_display = subject_display[:-1]
             subject_display += "..."
         
-        subject_text = font_subject.render(subject_display, True, (100, 100, 100))
-        notification.blit(subject_text, (text_x, padding + 22))
+        subject_text = font_subtitle.render(subject_display, True, (100, 100, 100))
+        notification.blit(subject_text, (text_x, padding + 28))
         
         # Draw to screen
         screen.blit(notification, (x, actual_y))
@@ -194,10 +194,16 @@ class EmailNotificationSystem:
         return notification
     
     def handle_click(self, pos):
-        """Handle click on notifications, returns email data if congratulatory email was clicked"""
+        """Handle click on notifications, returns email data if congratulatory email was clicked, or dismisses regular notifications"""
         for notification in self.notifications:
-            if notification.contains_point(pos) and notification.is_congratulatory:
-                return notification.email_data
+            if notification.contains_point(pos):
+                if notification.is_congratulatory:
+                    return notification.email_data
+                else:
+                    # Dismiss regular notification when clicked
+                    notification.is_dismissing = True
+                    notification.dismiss_start_time = time.time()
+                    return None
         return None
     
     def render(self, screen):

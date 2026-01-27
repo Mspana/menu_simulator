@@ -13,7 +13,7 @@ class ReplyWindow(ThemedWindow):
     def __init__(self, email_data, selected_response, position, assets_path, z_index=0):
         title = f"Reply: {email_data.get('subject', 'Email')[:40]}"
         width = 600
-        height = 500
+        height = 550  # Increased height to fit send button inside
         
         super().__init__(title, position, width, height, assets_path, z_index)
         self.background_surface.fill((255, 255, 255))
@@ -73,8 +73,19 @@ class ReplyWindow(ThemedWindow):
                 self.is_complete = False
                 return True
         
-        # Check if click is on Send button
-        send_button_y = content_y + self.height - self.titlebar_height - 60
+        # Calculate send button position (same as in render method)
+        y_offset_calc = padding  # Start with padding
+        y_offset_calc += 30  # Title
+        y_offset_calc += len(self.all_responses) * 50  # Response options
+        y_offset_calc += 20  # Spacing after responses
+        y_offset_calc += 30  # Divider
+        y_offset_calc += 30  # Typing label
+        y_offset_calc += 180  # Text box area (150 for box + 30 for spacing/hint)
+        
+        # Make sure button is within window bounds
+        max_y = content_y + self.height - self.titlebar_height - padding - 35
+        send_button_y = min(content_y + y_offset_calc, max_y)
+        
         send_button_rect = pygame.Rect(
             content_x + self.width - padding - 100,
             send_button_y,
@@ -189,10 +200,14 @@ class ReplyWindow(ThemedWindow):
         
         y_offset += 180
         
-        # Send button
+        # Send button - position it within the window bounds
+        # Make sure it fits within the window height
+        max_y = content_y + self.height - self.titlebar_height - padding - 35
+        send_button_y = min(content_y + y_offset, max_y)
+        
         send_button_rect = pygame.Rect(
             content_x + self.width - padding - 100,
-            content_y + y_offset,
+            send_button_y,
             100,
             35
         )
