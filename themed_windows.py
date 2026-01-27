@@ -1391,13 +1391,14 @@ class DiscordWindow(ThemedWindow):
                 text_rect = send_text.get_rect(center=send_button_rect.center)
                 screen.blit(send_text, text_rect)
         else:
-            # Draw reply button
-            reply_button_rect = pygame.Rect(msg_x, reply_area_y, 100, 30)
-            pygame.draw.rect(screen, (88, 101, 242), reply_button_rect)  # Discord blurple
-            font_button = pygame.font.Font(None, 16)
-            reply_text = font_button.render("Reply", True, (255, 255, 255))
-            text_rect = reply_text.get_rect(center=reply_button_rect.center)
-            screen.blit(reply_text, text_rect)
+            # Draw reply button (only if there are messages in the selected channel)
+            if channel_messages:  # Only show reply button if there are messages
+                reply_button_rect = pygame.Rect(msg_x, reply_area_y, 100, 30)
+                pygame.draw.rect(screen, (88, 101, 242), reply_button_rect)  # Discord blurple
+                font_button = pygame.font.Font(None, 16)
+                reply_text = font_button.render("Reply", True, (255, 255, 255))
+                text_rect = reply_text.get_rect(center=reply_button_rect.center)
+                screen.blit(reply_text, text_rect)
         
         pygame.draw.rect(screen, (180, 180, 180), 
                         pygame.Rect(self.position[0], self.position[1], self.width, self.height), 2)
