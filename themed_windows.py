@@ -674,6 +674,9 @@ class MessagesWindow(ThemedWindow):
         self.selected_reply_option = None
         # Events to report back to the game (e.g., for progress updates)
         self.sent_reply_events = []
+        # Track pressed state for buttons (reply/send) so actions happen on release
+        self._reply_button_pressed = False
+        self._send_button_pressed = False
     
     def add_message(self, contact, message):
         """Add a message from a contact"""
@@ -707,12 +710,8 @@ class MessagesWindow(ThemedWindow):
                 30
             )
             if reply_button_rect.collidepoint(pos):
-                self.replying = True
-                self.selected_reply_option = None
-                self.reply_text = ""
-                self.target_reply = ""
-                self.current_letter_index = 0
-                self.is_reply_complete = False
+                # Mark reply button as pressed; actual state change happens on release
+                self._reply_button_pressed = True
                 return True
         
         # Check reply option buttons
@@ -743,28 +742,60 @@ class MessagesWindow(ThemedWindow):
                 40
             )
             if send_button_rect.collidepoint(pos):
-                # Send the reply
+                # Mark send as pressed; actual send happens on release
+                self._send_button_pressed = True
+                return True
+        
+        return False
+    
+    def handle_release(self, pos):
+        """Handle mouse release - trigger button actions after visual feedback."""
+        super().handle_release(pos)
+        
+        content_y = self.position[1] + self.titlebar_height
+        
+        # Handle reply button release
+        if (self.selected_contact and not self.replying and 
+            not self.conversation_replied.get(self.selected_contact, False)):
+            reply_button_y = self.position[1] + self.height - 80
+            reply_button_rect = pygame.Rect(
+                self.position[0] + self.sidebar_width + 10,
+                reply_button_y,
+                100,
+                30
+            )
+            if self._reply_button_pressed and reply_button_rect.collidepoint(pos):
+                self.replying = True
+                self.selected_reply_option = None
+                self.reply_text = ""
+                self.target_reply = ""
+                self.current_letter_index = 0
+                self.is_reply_complete = False
+        self._reply_button_pressed = False
+        
+        # Handle send button release
+        if self.replying and self.is_reply_complete:
+            reply_area_y = self.position[1] + self.height - 90
+            send_button_rect = pygame.Rect(
+                self.position[0] + self.width - 110,
+                reply_area_y - 50,
+                100,
+                40
+            )
+            if self._send_button_pressed and send_button_rect.collidepoint(pos):
                 if self.selected_contact:
-                    # Ensure reply appears as sent (odd index = sent)
-                    # If current length is even, add a dummy received message first
                     if len(self.conversations[self.selected_contact]) % 2 == 0:
-                        # Add empty received message to make next one sent
                         self.conversations[self.selected_contact].append("")
                     self.conversations[self.selected_contact].append(self.reply_text)
-                    # Mark conversation as replied to
                     self.conversation_replied[self.selected_contact] = True
-                    # Record that a reply was sent so the game can grant progress
                     self.sent_reply_events.append("You replied in Messages")
-                # Reset reply state
                 self.replying = False
                 self.selected_reply_option = None
                 self.reply_text = ""
                 self.target_reply = ""
                 self.current_letter_index = 0
                 self.is_reply_complete = False
-                return True
-        
-        return False
+        self._send_button_pressed = False
     
     def handle_keypress(self, key):
         """Handle keyboard input for typing replies"""
@@ -869,6 +900,8 @@ class MessagesWindow(ThemedWindow):
         # Draw reply area (if contact is selected)
         if self.selected_contact:
             reply_area_y = self.position[1] + self.height - 90
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_buttons = pygame.mouse.get_pressed(num_buttons=3)
             
             if self.replying:
                 # Draw reply options if none selected
@@ -879,7 +912,12 @@ class MessagesWindow(ThemedWindow):
                     
                     for i, option in enumerate(self.reply_options):
                         option_rect = pygame.Rect(msg_x, reply_area_y - 130 + i * 35, 200, 30)
-                        pygame.draw.rect(screen, (240, 240, 240), option_rect)
+                        base_color = (240, 240, 240)
+                        if option_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                            draw_color = (220, 220, 220)
+                        else:
+                            draw_color = base_color
+                        pygame.draw.rect(screen, draw_color, option_rect)
                         pygame.draw.rect(screen, (200, 200, 200), option_rect, 1)
                         option_text = font_msg.render(option, True, (0, 0, 0))
                         text_rect = option_text.get_rect(center=option_rect.center)
@@ -901,9 +939,13 @@ class MessagesWindow(ThemedWindow):
                         remaining_text = font_typing.render(remaining, True, (200, 200, 200))
                         screen.blit(remaining_text, (msg_x + 5 + typed_text.get_width(), reply_area_y - 45))
                     
-                    # Draw send button
+                    # Draw send button with press feedback
                     send_button_rect = pygame.Rect(self.position[0] + self.width - 110, reply_area_y - 50, 100, 40)
-                    send_color = (0, 180, 0) if self.is_reply_complete else (150, 150, 150)
+                    base_color = (0, 180, 0) if self.is_reply_complete else (150, 150, 150)
+                    if send_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                        send_color = tuple(max(0, c - 30) for c in base_color)
+                    else:
+                        send_color = base_color
                     pygame.draw.rect(screen, send_color, send_button_rect)
                     pygame.draw.rect(screen, (100, 100, 100), send_button_rect, 1)
                     font_button = pygame.font.Font(None, 16)
@@ -914,7 +956,12 @@ class MessagesWindow(ThemedWindow):
                 # Draw reply button (only if not already replied)
                 if not self.conversation_replied.get(self.selected_contact, False):
                     reply_button_rect = pygame.Rect(msg_x, reply_area_y, 100, 30)
-                    pygame.draw.rect(screen, (0, 120, 255), reply_button_rect)
+                    base_color = (0, 120, 255)
+                    if reply_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                        draw_color = (0, 90, 210)
+                    else:
+                        draw_color = base_color
+                    pygame.draw.rect(screen, draw_color, reply_button_rect)
                     font_button = pygame.font.Font(None, 16)
                     reply_button_text = font_button.render("Reply", True, (255, 255, 255))
                     text_rect = reply_button_text.get_rect(center=reply_button_rect.center)
@@ -946,6 +993,9 @@ class SlackWindow(ThemedWindow):
         }
         # Events to report back to the game (for small progress updates)
         self.sent_reply_events = []
+        # Track pressed state for Slack reply/send buttons
+        self._reply_button_pressed = False
+        self._send_button_pressed = False
         
         # Reply state
         self.replying = False
@@ -988,12 +1038,8 @@ class SlackWindow(ThemedWindow):
                     30
                 )
                 if reply_button_rect.collidepoint(pos):
-                    self.replying = True
-                    self.selected_reply_option = None
-                    self.reply_text = ""
-                    self.target_reply = ""
-                    self.current_letter_index = 0
-                    self.is_reply_complete = False
+                    # Mark reply button as pressed; actual action on release
+                    self._reply_button_pressed = True
                     return True
         
         # Check reply option buttons
@@ -1025,24 +1071,62 @@ class SlackWindow(ThemedWindow):
                 40
             )
             if send_button_rect.collidepoint(pos):
-                # Send the reply
+                # Mark send button as pressed; actual send on release
+                self._send_button_pressed = True
+                return True
+        
+        return False
+    
+    def handle_release(self, pos):
+        """Handle mouse release for Slack buttons."""
+        super().handle_release(pos)
+        
+        content_y = self.position[1] + self.titlebar_height
+        sidebar_width = 180
+        
+        # Reply button release
+        channel_messages = [m for m in self.messages if m['channel'] == self.selected_channel]
+        if not self.replying and channel_messages:
+            reply_button_y = self.position[1] + self.height - 80
+            reply_button_rect = pygame.Rect(
+                self.position[0] + sidebar_width + 10,
+                reply_button_y,
+                100,
+                30
+            )
+            if self._reply_button_pressed and reply_button_rect.collidepoint(pos):
+                self.replying = True
+                self.selected_reply_option = None
+                self.reply_text = ""
+                self.target_reply = ""
+                self.current_letter_index = 0
+                self.is_reply_complete = False
+        self._reply_button_pressed = False
+        
+        # Send button release
+        if self.replying and self.is_reply_complete:
+            reply_area_y = self.position[1] + self.height - 90
+            msg_x = self.position[0] + sidebar_width + 10
+            send_button_rect = pygame.Rect(
+                msg_x,
+                reply_area_y - 5,  # Below the typing box
+                100,
+                40
+            )
+            if self._send_button_pressed and send_button_rect.collidepoint(pos):
                 self.messages.append({
                     "channel": self.selected_channel,
                     "user": "matt",
                     "text": self.reply_text
                 })
-                # Record that a reply was sent so the game can grant progress
                 self.sent_reply_events.append("You replied in Slack")
-                # Reset reply state
                 self.replying = False
                 self.selected_reply_option = None
                 self.reply_text = ""
                 self.target_reply = ""
                 self.current_letter_index = 0
                 self.is_reply_complete = False
-                return True
-        
-        return False
+        self._send_button_pressed = False
     
     def handle_keypress(self, key):
         """Handle keyboard input for typing replies"""
@@ -1230,6 +1314,9 @@ class DiscordWindow(ThemedWindow):
         self.selected_reply_option = None
         # Events to report back to the game (for small progress updates)
         self.sent_reply_events = []
+        # Track pressed state for Discord reply/send buttons
+        self._reply_button_pressed = False
+        self._send_button_pressed = False
     
     def add_message(self, channel, user, text):
         """Add a message to a channel"""
@@ -1263,12 +1350,8 @@ class DiscordWindow(ThemedWindow):
                     30
                 )
                 if reply_button_rect.collidepoint(pos):
-                    self.replying = True
-                    self.selected_reply_option = None
-                    self.reply_text = ""
-                    self.target_reply = ""
-                    self.current_letter_index = 0
-                    self.is_reply_complete = False
+                    # Mark reply button as pressed; actual action on release
+                    self._reply_button_pressed = True
                     return True
         
         # Check reply option buttons
@@ -1299,24 +1382,61 @@ class DiscordWindow(ThemedWindow):
                 40
             )
             if send_button_rect.collidepoint(pos):
-                # Send the reply
+                # Mark send button as pressed; actual send on release
+                self._send_button_pressed = True
+                return True
+        
+        return False
+    
+    def handle_release(self, pos):
+        """Handle mouse release for Discord buttons."""
+        super().handle_release(pos)
+        
+        content_y = self.position[1] + self.titlebar_height
+        sidebar_width = 180
+        
+        # Reply button release
+        channel_messages = [m for m in self.messages if m['channel'] == self.selected_channel]
+        if not self.replying and channel_messages:
+            reply_button_y = self.position[1] + self.height - 80
+            reply_button_rect = pygame.Rect(
+                self.position[0] + sidebar_width + 10,
+                reply_button_y,
+                100,
+                30
+            )
+            if self._reply_button_pressed and reply_button_rect.collidepoint(pos):
+                self.replying = True
+                self.selected_reply_option = None
+                self.reply_text = ""
+                self.target_reply = ""
+                self.current_letter_index = 0
+                self.is_reply_complete = False
+        self._reply_button_pressed = False
+        
+        # Send button release
+        if self.replying and self.is_reply_complete:
+            reply_area_y = self.position[1] + self.height - 90
+            send_button_rect = pygame.Rect(
+                self.position[0] + self.width - 110,  # Match render position
+                reply_area_y - 50,  # Match render position
+                100,
+                40
+            )
+            if self._send_button_pressed and send_button_rect.collidepoint(pos):
                 self.messages.append({
                     "channel": self.selected_channel,
                     "user": "matt",
                     "text": self.reply_text
                 })
-                # Record that a reply was sent so the game can grant progress
                 self.sent_reply_events.append("You replied in Discord")
-                # Reset reply state
                 self.replying = False
                 self.selected_reply_option = None
                 self.reply_text = ""
                 self.target_reply = ""
                 self.current_letter_index = 0
                 self.is_reply_complete = False
-                return True
-        
-        return False
+        self._send_button_pressed = False
     
     def handle_keypress(self, key):
         """Handle keyboard input for typing replies"""
@@ -1394,6 +1514,8 @@ class DiscordWindow(ThemedWindow):
         
         # Draw reply area
         reply_area_y = self.position[1] + self.height - 90
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_buttons = pygame.mouse.get_pressed(num_buttons=3)
         
         if self.replying:
             # Draw reply options if none selected
@@ -1404,7 +1526,12 @@ class DiscordWindow(ThemedWindow):
                 
                 for i, option in enumerate(self.reply_options):
                     option_rect = pygame.Rect(msg_x, reply_area_y - 130 + i * 35, 200, 30)
-                    pygame.draw.rect(screen, (47, 49, 54), option_rect)
+                    base_color = (47, 49, 54)
+                    if option_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                        draw_color = (37, 39, 44)
+                    else:
+                        draw_color = base_color
+                    pygame.draw.rect(screen, draw_color, option_rect)
                     pygame.draw.rect(screen, (66, 70, 78), option_rect, 1)
                     option_text = font_msg.render(option, True, (220, 220, 220))
                     text_rect = option_text.get_rect(center=option_rect.center)
@@ -1426,9 +1553,13 @@ class DiscordWindow(ThemedWindow):
                     remaining_text = font_typing.render(remaining, True, (150, 150, 150))
                     screen.blit(remaining_text, (msg_x + 5 + typed_text.get_width(), reply_area_y - 45))
                 
-                # Draw send button
+                # Draw send button with press feedback
                 send_button_rect = pygame.Rect(self.position[0] + self.width - 110, reply_area_y - 50, 100, 40)
-                send_color = (88, 101, 242) if self.is_reply_complete else (66, 70, 78)
+                base_color = (88, 101, 242) if self.is_reply_complete else (66, 70, 78)
+                if send_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                    send_color = tuple(max(0, c - 25) for c in base_color)
+                else:
+                    send_color = base_color
                 pygame.draw.rect(screen, send_color, send_button_rect)
                 pygame.draw.rect(screen, (100, 100, 100), send_button_rect, 1)
                 font_button = pygame.font.Font(None, 16)
@@ -1439,7 +1570,12 @@ class DiscordWindow(ThemedWindow):
             # Draw reply button (only if there are messages in the selected channel)
             if channel_messages:  # Only show reply button if there are messages
                 reply_button_rect = pygame.Rect(msg_x, reply_area_y, 100, 30)
-                pygame.draw.rect(screen, (88, 101, 242), reply_button_rect)  # Discord blurple
+                base_color = (88, 101, 242)  # Discord blurple
+                if reply_button_rect.collidepoint(mouse_pos) and mouse_buttons[0]:
+                    draw_color = (70, 80, 210)
+                else:
+                    draw_color = base_color
+                pygame.draw.rect(screen, draw_color, reply_button_rect)
                 font_button = pygame.font.Font(None, 16)
                 reply_text = font_button.render("Reply", True, (255, 255, 255))
                 text_rect = reply_text.get_rect(center=reply_button_rect.center)

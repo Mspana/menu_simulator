@@ -23,7 +23,7 @@ REGULAR_EMAILS, CONGRATULATORY_EMAILS = _load_emails()
 # Calvelli's activity messages (more basic and exasperated)
 CALVELLI_ACTIVITIES = [
     "Calvelli did the sponsorship thing",
-    "Calvelli booked the venue I guess",
+    "Calvelli booked the venue",
     "Calvelli sent some emails",
     "Calvelli fixed the spreadsheet again",
     "Calvelli got the speakers",

@@ -31,6 +31,9 @@ class ReplyWindow(ThemedWindow):
         self.all_responses = email_data.get('responses', [])
         self.selected_response_index = self.all_responses.index(selected_response) if selected_response in self.all_responses else 0
         
+        # Track send button pressed state so action happens on mouse release
+        self._send_button_pressed = False
+        
     def handle_keypress(self, key):
         """Handle keyboard input - each key press types one letter"""
         if self.is_complete:
@@ -93,14 +96,48 @@ class ReplyWindow(ThemedWindow):
             35
         )
         if send_button_rect.collidepoint(pos) and self.is_complete:
+            # Mark as pressed; actual send happens on mouse release
+            self._send_button_pressed = True
+            return True
+        
+        return False
+    
+    def handle_release(self, pos):
+        """Handle mouse release - trigger send after visual feedback"""
+        # Let base class clear drag state
+        super().handle_release(pos)
+        
+        content_y = self.position[1] + self.titlebar_height
+        content_x = self.position[0]
+        padding = 20
+        
+        # Recalculate send button rect (same as in _handle_content_click/render)
+        y_offset_calc = padding  # Start with padding
+        y_offset_calc += 30  # Title
+        y_offset_calc += len(self.all_responses) * 50  # Response options
+        y_offset_calc += 20  # Spacing after responses
+        y_offset_calc += 30  # Divider
+        y_offset_calc += 30  # Typing label
+        y_offset_calc += 180  # Text box area
+        
+        max_y = content_y + self.height - self.titlebar_height - padding - 35
+        send_button_y = min(content_y + y_offset_calc, max_y)
+        
+        send_button_rect = pygame.Rect(
+            content_x + self.width - padding - 100,
+            send_button_y,
+            100,
+            35
+        )
+        
+        if self._send_button_pressed and send_button_rect.collidepoint(pos) and self.is_complete:
             # Send the reply - store it in email data
             self.sent_reply = self.typed_text
             self.email_data['replied'] = True
             self.email_data['reply_text'] = self.typed_text
             self.should_close = True
-            return True
-        
-        return False
+        # Always reset pressed state
+        self._send_button_pressed = False
     
     def render(self, screen):
         screen.blit(self.background_surface, self.position)

@@ -47,7 +47,7 @@ BLUE = (0, 120, 212)
 class Game:
     def __init__(self, skip_startup=False):
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("Menu Simulator - Fundraising for Conference")
+        pygame.display.set_caption("Menu Simulator - Fundraising for a Conference")
         self.clock = pygame.time.Clock()
         self.running = True
         self.skip_startup = skip_startup
@@ -415,11 +415,6 @@ class Game:
                         self.email_view_windows.remove(menu)
                     continue
                 
-                # Check if EmailViewWindow wants to open a reply window
-                if isinstance(menu, EmailViewWindow) and menu.reply_to_open:
-                    self._open_reply_window(menu.email_data, menu.reply_to_open)
-                    menu.reply_to_open = None
-                
                 # Check if ReplyWindow should close
                 if isinstance(menu, ReplyWindow) and menu.should_close:
                     # Update the email in Outlook to mark it as replied
@@ -632,6 +627,12 @@ class Game:
         # Update Outlook email system
         if self.outlook_email_system:
             self.outlook_email_system.update()
+        
+        # Open reply windows requested by any EmailViewWindow (triggered on mouse release)
+        for menu in list(self.menus):
+            if isinstance(menu, EmailViewWindow) and menu.reply_to_open:
+                self._open_reply_window(menu.email_data, menu.reply_to_open)
+                menu.reply_to_open = None
         
         # Update Outlook window (for highlight timer and blinking)
         outlook_window = next((m for m in self.menus if isinstance(m, OutlookWindow)), None)

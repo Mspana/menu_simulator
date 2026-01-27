@@ -118,7 +118,7 @@ class StartScreen:
         
         # Subtitle with underline
         subtitle_y = title_y + 80
-        subtitle_text = self.subtitle_font.render("Fundraising for Conference", True, (180, 200, 255))
+        subtitle_text = self.subtitle_font.render("Fundraising for a Conference", True, (180, 200, 255))
         subtitle_rect = subtitle_text.get_rect(center=(self.width // 2, subtitle_y))
         self.screen.blit(subtitle_text, subtitle_rect)
         

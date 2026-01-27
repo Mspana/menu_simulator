@@ -23,6 +23,8 @@ class EmailViewWindow(ThemedWindow):
         self.max_scroll = 0
         self.should_close = False
         self.reply_to_open = None  # Signal to open reply window
+        # Track pressed state so action can trigger on mouse release
+        self._reply_button_pressed = False
         
     def _handle_content_click(self, pos):
         """Handle clicks within the content area"""
@@ -40,11 +42,34 @@ class EmailViewWindow(ThemedWindow):
                 30
             )
             if reply_button_rect.collidepoint(pos):
-                # Open reply window with first response as default
-                self.reply_to_open = self.email_data['responses'][0]
+                # Mark as pressed; actual action happens on mouse release
+                self._reply_button_pressed = True
                 return True
         
         return False
+    
+    def handle_release(self, pos):
+        """Handle mouse release - trigger actions after visual feedback"""
+        # Let base class handle drag state reset
+        super().handle_release(pos)
+        
+        content_y = self.position[1] + self.titlebar_height
+        content_x = self.position[0]
+        padding = 20
+        
+        # Reply button action on release
+        if 'responses' in self.email_data:
+            reply_button_rect = pygame.Rect(
+                content_x + self.width - padding - 100,
+                content_y + padding,
+                100,
+                30
+            )
+            if self._reply_button_pressed and reply_button_rect.collidepoint(pos):
+                # Open reply window with first response as default
+                self.reply_to_open = self.email_data['responses'][0]
+        # Reset press state
+        self._reply_button_pressed = False
     
     def render(self, screen):
         screen.blit(self.background_surface, self.position)
