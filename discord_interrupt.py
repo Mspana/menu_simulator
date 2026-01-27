@@ -184,8 +184,8 @@ class DiscordInterrupt:
         # Draw border around popup
         pygame.draw.rect(screen, (100, 100, 100), self.popup_rect, 2)
         
-        # Draw message text (centered in popup)
-        font = pygame.font.Font(None, 24)
+        # Draw message text (centered in popup) - larger font
+        font = pygame.font.Font(None, 32)  # Increased from 24
         # Wrap text if needed
         words = self.current_message.split(' ')
         lines = []
@@ -203,15 +203,15 @@ class DiscordInterrupt:
             lines.append(current_line.strip())
         
         # Draw lines (centered in popup)
-        total_height = len(lines) * 30
+        total_height = len(lines) * 35  # Increased spacing
         start_y = self.popup_rect.y + (self.popup_height - total_height) // 2
         for i, line in enumerate(lines):
             text_surface = font.render(line, True, (255, 255, 255))
-            text_rect = text_surface.get_rect(center=(self.popup_rect.centerx, start_y + i * 30))
+            text_rect = text_surface.get_rect(center=(self.popup_rect.centerx, start_y + i * 35))
             screen.blit(text_surface, text_rect)
         
-        # Draw "Message From: Calvelli" label (top left of popup)
-        name_font = pygame.font.Font(None, 20)
+        # Draw "Message From: Calvelli" label (top left of popup) - larger font
+        name_font = pygame.font.Font(None, 24)  # Increased from 20
         name_text = name_font.render("Message From: Calvelli", True, (200, 200, 200))
         screen.blit(name_text, (self.popup_rect.x + 15, self.popup_rect.y + 10))
         

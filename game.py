@@ -545,11 +545,11 @@ class Game:
                     if game_type == "ftl":
                         ftl_window = next((m for m in self.menus if isinstance(m, FTLWindow)), None)
                         if ftl_window:
-                            self.game_notifications.trigger_notification("ftl", ftl_window)
+                            self.game_notifications.trigger_notification("ftl", ftl_window, self.menus)
                     else:
                         zomboid_window = next((m for m in self.menus if isinstance(m, ZomboidWindow)), None)
                         if zomboid_window:
-                            self.game_notifications.trigger_notification("zomboid", zomboid_window)
+                            self.game_notifications.trigger_notification("zomboid", zomboid_window, self.menus)
                 
                 # Randomly trigger phone call (20% chance)
                 if random.random() < 0.2:  # 20% chance
