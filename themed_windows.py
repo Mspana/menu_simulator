@@ -992,9 +992,10 @@ class SlackWindow(ThemedWindow):
         # Check send button
         if self.replying and self.is_reply_complete:
             reply_area_y = self.position[1] + self.height - 90
+            msg_x = self.position[0] + sidebar_width + 10
             send_button_rect = pygame.Rect(
-                self.position[0] + self.width - 110,
-                reply_area_y - 50,
+                msg_x,
+                reply_area_y - 5,  # Below the typing box
                 100,
                 40
             )
@@ -1243,9 +1244,10 @@ class DiscordWindow(ThemedWindow):
         # Check send button
         if self.replying and self.is_reply_complete:
             reply_area_y = self.position[1] + self.height - 90
+            msg_x = self.position[0] + sidebar_width + 10
             send_button_rect = pygame.Rect(
-                self.position[0] + self.width - 110,
-                reply_area_y - 50,
+                msg_x,
+                reply_area_y - 5,  # Below the typing box
                 100,
                 40
             )
