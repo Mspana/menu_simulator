@@ -3,6 +3,7 @@ Menu Simulator Game
 Main entry point and game loop
 """
 
+import asyncio
 import pygame
 import sys
 import os
@@ -932,12 +933,34 @@ class Game:
         pygame.quit()
         sys.exit()
 
-if __name__ == "__main__":
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Menu Simulator Game')
-    parser.add_argument('--no_startup', action='store_true', 
-                       help='Skip start screen and startup animations for development')
-    args = parser.parse_args()
+async def main():
+    # Try to parse args, but handle gracefully if argparse fails (e.g., in browser)
+    try:
+        parser = argparse.ArgumentParser(description='Menu Simulator Game')
+        parser.add_argument('--no_startup', action='store_true', 
+                           help='Skip start screen and startup animations for development')
+        args = parser.parse_args()
+        skip_startup = args.no_startup
+    except:
+        # If argparse fails (e.g., in browser environment), use defaults
+        skip_startup = False
     
-    game = Game(skip_startup=args.no_startup)
-    game.run()
+    game = Game(skip_startup=skip_startup)
+    
+    # Main game loop for pygbag/browser
+    while game.running:
+        game.handle_events()
+        game.update()
+        game.render()
+        
+        # Only flip display if not in headless mode
+        if not game._headless if hasattr(game, '_headless') else True:
+            pygame.display.flip()
+        
+        game.clock.tick(FPS)
+        await asyncio.sleep(0)  # Yield control for async browser environment
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    asyncio.run(main())
