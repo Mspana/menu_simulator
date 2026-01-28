@@ -93,11 +93,13 @@ class Game:
             self.startup_animation = None
             self.showing_start_screen = True
             self.showing_startup_animation = False
+            self.start_screen_clicks = 0  # Track clicks on start screen (need 2 to proceed)
         else:
             self.start_screen = None
             self.startup_animation = None
             self.showing_start_screen = False
             self.showing_startup_animation = False
+            self.start_screen_clicks = 0
         self.game_started = skip_startup
         # Track when the game instance was created (for gating early events)
         self.start_time_ms = pygame.time.get_ticks()
@@ -287,14 +289,16 @@ class Game:
             
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left click
-                    # Handle start screen
+                    # Handle start screen - require 2 clicks to proceed
                     if self.showing_start_screen and self.start_screen:
                         if self.start_screen.handle_click(event.pos):
-                            self.showing_start_screen = False
-                            self.showing_startup_animation = True
-                            # Include activity log window in startup animations
-                            windows_for_animation = [self.activity_log_window] + self.menus
-                            self.startup_animation = StartupAnimation(self.screen, windows_for_animation)
+                            self.start_screen_clicks += 1
+                            if self.start_screen_clicks >= 2:
+                                self.showing_start_screen = False
+                                self.showing_startup_animation = True
+                                # Include activity log window in startup animations
+                                windows_for_animation = [self.activity_log_window] + self.menus
+                                self.startup_animation = StartupAnimation(self.screen, windows_for_animation)
                         continue
                     
                     if not self.showing_startup_animation:
@@ -945,7 +949,7 @@ async def main():
         # If argparse fails (e.g., in browser environment), use defaults
         skip_startup = False
     
-    game = Game(skip_startup=skip_startup)
+    game = Game()
     
     # Main game loop for pygbag/browser
     while game.running:

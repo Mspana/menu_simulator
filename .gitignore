@@ -24,3 +24,6 @@ Thumbs.db
 
 # Game specific
 *.log
+
+# Build cache (not the actual build)
+build/web-cache/
